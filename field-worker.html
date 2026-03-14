@@ -986,21 +986,9 @@
           if (progress.percentage === 100) {
             showView('complete');
           } else {
-            // Auto-select first incomplete parameter and show block selector
-            const firstParam = entry.getFirstIncompleteParameter();
-            if (firstParam) {
-              entry.selectParameter(firstParam);
-              selectedParam = firstParam;
-              
-              const labels = entry.getParameterLabels();
-              elements.currentParamName.textContent = labels[firstParam - 1];
-              
-              renderBlockSelector();
-              showView('blocks');
-            } else {
-              renderParamSelector();
-              showView('params');
-            }
+            // Show parameter selector so user can pick which parameter to work on
+            renderParamSelector();
+            showView('params');
           }
         }
         
