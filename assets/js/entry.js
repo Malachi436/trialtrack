@@ -1,16 +1,17 @@
 /**
  * TrialTrack — Entry Module
  * Data entry flow logic for field workers
+ * Parameter-focused workflow: Select parameter → Select block → Enter data for all plots
  */
 
 const entry = (() => {
   // State
   let currentField = null;
   let currentRound = null;
+  let currentParameter = null; // 1-6
   let currentBlock = null;
-  let currentPlot = null;
-  let enteredPlots = new Set();
-  let existingEntry = null;
+  let entriesCache = {}; // { plotNumber: entryObject }
+  let completedParamBlocks = new Set(); // "param1_block2" format
 
   /**
    * Initialize the entry module
@@ -33,14 +34,42 @@ const entry = (() => {
       currentRound = roundResult.data;
     }
 
-    // Get entries for current round
+    // Get all entries for current round
+    entriesCache = {};
+    completedParamBlocks = new Set();
+    
     if (currentRound) {
       const entriesResult = await api.getEntriesForRound(currentRound.id);
       if (!entriesResult.error && entriesResult.data) {
-        enteredPlots = new Set(entriesResult.data.map(e => e.plot_number));
+        // Cache entries by plot number
+        entriesResult.data.forEach(e => {
+          entriesCache[e.plot_number] = e;
+        });
+        
+        // Calculate which param+block combinations are complete
+        updateCompletedParamBlocks();
       }
-    } else {
-      enteredPlots = new Set();
+    }
+  }
+
+  /**
+   * Update the set of completed parameter+block combinations
+   */
+  function updateCompletedParamBlocks() {
+    completedParamBlocks = new Set();
+    
+    for (let param = 1; param <= 6; param++) {
+      for (let block = 1; block <= 5; block++) {
+        const plots = utils.getPlotsForBlock(block);
+        const allComplete = plots.every(plot => {
+          const entry = entriesCache[plot.plot];
+          return entry && entry[`p${param}`] !== null && entry[`p${param}`] !== undefined;
+        });
+        
+        if (allComplete) {
+          completedParamBlocks.add(`p${param}_b${block}`);
+        }
+      }
     }
   }
 
@@ -61,14 +90,49 @@ const entry = (() => {
   }
 
   /**
-   * Get progress stats
+   * Get overall progress stats
    * @returns {Object} - { entered, total, percentage }
    */
   function getProgress() {
-    const total = CONFIG.TOTAL_PLOTS;
-    const entered = enteredPlots.size;
+    // Total = 6 params × 5 blocks = 30 param-block combinations
+    const total = 30;
+    const entered = completedParamBlocks.size;
     const percentage = Math.round((entered / total) * 100);
     return { entered, total, percentage };
+  }
+
+  /**
+   * Get progress for a specific parameter
+   * @param {number} paramNum - Parameter number (1-6)
+   * @returns {Object} - { completed, total, percentage }
+   */
+  function getParameterProgress(paramNum) {
+    let completed = 0;
+    for (let block = 1; block <= 5; block++) {
+      if (completedParamBlocks.has(`p${paramNum}_b${block}`)) {
+        completed++;
+      }
+    }
+    return { completed, total: 5, percentage: Math.round((completed / 5) * 100) };
+  }
+
+  /**
+   * Check if a parameter+block combination is complete
+   * @param {number} paramNum
+   * @param {number} blockNum
+   * @returns {boolean}
+   */
+  function isParamBlockComplete(paramNum, blockNum) {
+    return completedParamBlocks.has(`p${paramNum}_b${blockNum}`);
+  }
+
+  /**
+   * Set the current parameter
+   * @param {number} paramNumber - Parameter number (1-6)
+   */
+  function selectParameter(paramNumber) {
+    currentParameter = paramNumber;
+    currentBlock = null;
   }
 
   /**
@@ -77,64 +141,27 @@ const entry = (() => {
    */
   function selectBlock(blockNumber) {
     currentBlock = blockNumber;
-    currentPlot = null;
-    existingEntry = null;
   }
 
   /**
-   * Set the current plot
-   * @param {number} plotNumber - Plot number (1-30)
+   * Get existing values for current parameter in current block
+   * @returns {Array} - Array of { plot, treatment, value, entryId }
    */
-  async function selectPlot(plotNumber) {
-    currentPlot = plotNumber;
-    existingEntry = null;
-
-    // Check if this plot already has an entry this round
-    if (currentRound) {
-      const result = await api.getEntryByRoundAndPlot(currentRound.id, plotNumber);
-      if (!result.error && result.data) {
-        existingEntry = result.data;
-      }
-    }
-  }
-
-  /**
-   * Get plots for the current block
-   * @returns {Array} - Plot info array with entered status
-   */
-  function getPlotsForCurrentBlock() {
-    if (!currentBlock) return [];
+  function getBlockParameterData() {
+    if (!currentBlock || !currentParameter) return [];
     
-    return utils.getPlotsForBlock(currentBlock).map(plot => ({
-      ...plot,
-      entered: enteredPlots.has(plot.plot)
-    }));
-  }
-
-  /**
-   * Check if a plot has already been entered
-   * @param {number} plotNumber
-   * @returns {boolean}
-   */
-  function isPlotEntered(plotNumber) {
-    return enteredPlots.has(plotNumber);
-  }
-
-  /**
-   * Get the existing entry for current plot (if any)
-   * @returns {Object|null}
-   */
-  function getExistingEntry() {
-    return existingEntry;
-  }
-
-  /**
-   * Get current plot info
-   * @returns {Object|null}
-   */
-  function getCurrentPlotInfo() {
-    if (!currentPlot) return null;
-    return utils.getPlotInfo(currentPlot);
+    const plots = utils.getPlotsForBlock(currentBlock);
+    return plots.map(plot => {
+      const entry = entriesCache[plot.plot];
+      const paramKey = `p${currentParameter}`;
+      return {
+        plot: plot.plot,
+        treatment: plot.treatment,
+        value: entry ? entry[paramKey] : null,
+        entryId: entry ? entry.id : null,
+        hasEntry: !!entry
+      };
+    });
   }
 
   /**
@@ -154,19 +181,24 @@ const entry = (() => {
   }
 
   /**
-   * Save entry data
-   * @param {Object} data - { p1-p6, notes }
-   * @param {string} username - Who is entering
-   * @returns {Promise<Object>} - { success, error, isUpdate }
+   * Get current parameter label
+   * @returns {string}
    */
-  async function saveEntry(data, username) {
-    if (!currentField || !currentPlot) {
-      return { success: false, error: 'No plot selected.', isUpdate: false };
-    }
+  function getCurrentParameterLabel() {
+    if (!currentParameter) return '';
+    const labels = getParameterLabels();
+    return labels[currentParameter - 1];
+  }
 
-    const plotInfo = utils.getPlotInfo(currentPlot);
-    if (!plotInfo) {
-      return { success: false, error: 'Invalid plot.', isUpdate: false };
+  /**
+   * Save parameter data for all plots in current block
+   * @param {Array} plotValues - Array of { plot, value }
+   * @param {string} username - Who is entering
+   * @returns {Promise<Object>} - { success, error, savedCount }
+   */
+  async function saveBlockParameter(plotValues, username) {
+    if (!currentField || !currentBlock || !currentParameter) {
+      return { success: false, error: 'No block or parameter selected.', savedCount: 0 };
     }
 
     try {
@@ -189,7 +221,7 @@ const entry = (() => {
 
         const roundResult = await api.createRound(newRound);
         if (roundResult.error) {
-          return { success: false, error: `Failed to create round: ${roundResult.error}`, isUpdate: false };
+          return { success: false, error: `Failed to create round: ${roundResult.error}`, savedCount: 0 };
         }
 
         currentRound = roundResult.data[0] || newRound;
@@ -197,62 +229,77 @@ const entry = (() => {
         roundNumber = currentRound.round_number;
       }
 
-      // Prepare entry data
-      const entryData = {
-        round_id: roundId,
-        field_id: currentField.id,
-        block_id: null, // We'll need to look this up
-        plot_id: null,  // We'll need to look this up
-        plot_number: currentPlot,
-        block_number: plotInfo.block,
-        treatment: plotInfo.treatment,
-        p1: parseFloat(data.p1) || null,
-        p2: parseFloat(data.p2) || null,
-        p3: parseFloat(data.p3) || null,
-        p4: parseFloat(data.p4) || null,
-        p5: parseFloat(data.p5) || null,
-        p6: parseFloat(data.p6) || null,
-        notes: utils.sanitize(data.notes) || null,
-        entered_by: utils.sanitize(username)
-      };
+      const paramKey = `p${currentParameter}`;
+      let savedCount = 0;
+      let errors = [];
 
-      // Check for existing entry
-      if (existingEntry) {
-        // Update existing entry
-        const result = await api.updateEntry(existingEntry.id, entryData);
-        if (result.error) {
-          return { success: false, error: result.error, isUpdate: true };
-        }
-        return { success: true, error: null, isUpdate: true };
-      } else {
-        // Save new entry
-        entryData.id = utils.generateUUID();
-        const result = await api.saveEntry(entryData);
-        if (result.error) {
-          // Check for duplicate constraint
-          if (result.error.includes('duplicate') || result.error.includes('unique')) {
-            // Try to update instead
-            const existingResult = await api.getEntryByRoundAndPlot(roundId, currentPlot);
-            if (!existingResult.error && existingResult.data) {
-              existingEntry = existingResult.data;
-              const updateResult = await api.updateEntry(existingEntry.id, entryData);
-              if (updateResult.error) {
-                return { success: false, error: updateResult.error, isUpdate: true };
-              }
-              return { success: true, error: null, isUpdate: true };
-            }
+      // Process each plot value
+      for (const pv of plotValues) {
+        const plotInfo = utils.getPlotInfo(pv.plot);
+        if (!plotInfo) continue;
+
+        const existingEntry = entriesCache[pv.plot];
+        const paramValue = pv.value !== '' && pv.value !== null ? parseFloat(pv.value) : null;
+
+        if (existingEntry) {
+          // Update existing entry with new parameter value
+          const updateData = {
+            [paramKey]: paramValue,
+            entered_by: utils.sanitize(username)
+          };
+
+          const result = await api.updateEntry(existingEntry.id, updateData);
+          if (result.error) {
+            errors.push(`Plot ${pv.plot}: ${result.error}`);
+          } else {
+            // Update cache
+            entriesCache[pv.plot] = { ...existingEntry, ...updateData };
+            savedCount++;
           }
-          return { success: false, error: result.error, isUpdate: false };
+        } else {
+          // Create new entry with just this parameter
+          const entryData = {
+            id: utils.generateUUID(),
+            round_id: roundId,
+            field_id: currentField.id,
+            block_id: null,
+            plot_id: null,
+            plot_number: pv.plot,
+            block_number: plotInfo.block,
+            treatment: plotInfo.treatment,
+            p1: currentParameter === 1 ? paramValue : null,
+            p2: currentParameter === 2 ? paramValue : null,
+            p3: currentParameter === 3 ? paramValue : null,
+            p4: currentParameter === 4 ? paramValue : null,
+            p5: currentParameter === 5 ? paramValue : null,
+            p6: currentParameter === 6 ? paramValue : null,
+            notes: null,
+            entered_by: utils.sanitize(username)
+          };
+
+          const result = await api.saveEntry(entryData);
+          if (result.error) {
+            errors.push(`Plot ${pv.plot}: ${result.error}`);
+          } else {
+            // Add to cache
+            entriesCache[pv.plot] = entryData;
+            savedCount++;
+          }
         }
-        
-        // Mark plot as entered
-        enteredPlots.add(currentPlot);
-        return { success: true, error: null, isUpdate: false };
       }
 
+      // Update completed status
+      updateCompletedParamBlocks();
+
+      if (errors.length > 0) {
+        return { success: false, error: errors.join('; '), savedCount };
+      }
+
+      return { success: true, error: null, savedCount };
+
     } catch (error) {
-      console.error('Error saving entry:', error);
-      return { success: false, error: 'Failed to save entry. Please try again.', isUpdate: false };
+      console.error('Error saving block parameter:', error);
+      return { success: false, error: 'Failed to save data. Please try again.', savedCount: 0 };
     }
   }
 
@@ -260,9 +307,8 @@ const entry = (() => {
    * Reset selection state
    */
   function resetSelection() {
+    currentParameter = null;
     currentBlock = null;
-    currentPlot = null;
-    existingEntry = null;
   }
 
   /**
@@ -272,10 +318,9 @@ const entry = (() => {
     return {
       field: currentField,
       round: currentRound,
+      parameter: currentParameter,
       block: currentBlock,
-      plot: currentPlot,
-      existingEntry,
-      enteredPlots: Array.from(enteredPlots)
+      completedParamBlocks: Array.from(completedParamBlocks)
     };
   }
 
@@ -286,14 +331,14 @@ const entry = (() => {
     getWindowStatus,
     canEnter,
     getProgress,
+    getParameterProgress,
+    isParamBlockComplete,
+    selectParameter,
     selectBlock,
-    selectPlot,
-    getPlotsForCurrentBlock,
-    isPlotEntered,
-    getExistingEntry,
-    getCurrentPlotInfo,
+    getBlockParameterData,
     getParameterLabels,
-    saveEntry,
+    getCurrentParameterLabel,
+    saveBlockParameter,
     resetSelection,
     getState
   };
@@ -301,3 +346,4 @@ const entry = (() => {
 
 // Freeze entry object
 Object.freeze(entry);
+
