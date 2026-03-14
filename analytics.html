@@ -250,21 +250,6 @@
             </div>
           </div>
 
-          <!-- Progress Over Time (Main Chart - replaces Heatmap) -->
-          <div class="chart-card" style="margin-top: var(--space-4);">
-            <div class="chart-card-header">
-              <div>
-                <h3 class="chart-card-title">Data Collection Progress</h3>
-                <p class="chart-card-subtitle">Completion percentage by round — green = 100% complete</p>
-              </div>
-            </div>
-            <div class="chart-card-body">
-              <div class="chart-container tall">
-                <canvas id="progressChart"></canvas>
-              </div>
-            </div>
-          </div>
-
           <!-- Round Overview Section -->
           <div class="chart-card" style="margin-top: var(--space-4);">
             <div class="chart-card-header">
@@ -498,10 +483,6 @@
       // Block Comparison
       const blockData = analytics.getBlockData();
       charts.createBlockComparisonChart('blockChart', blockData);
-
-      // Progress Over Time Chart (main chart)
-      const progressData = analytics.getProgressOverTimeData();
-      charts.createProgressChart('progressChart', progressData);
     }
 
     function renderOverviewRoundSelect() {
