@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>TrialTrack | Admin</title>
   
   <!-- Fonts -->
@@ -19,6 +19,88 @@
   <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg">
 </head>
 <body>
+  <!-- Mobile Header (visible on mobile only) -->
+  <header class="mobile-admin-header">
+    <div class="mobile-admin-header-left">
+      <img src="assets/img/logo.svg" alt="TrialTrack" class="mobile-admin-logo">
+      <span class="mobile-admin-title">Admin</span>
+    </div>
+    <div class="mobile-admin-header-right">
+      <button id="mobileMenuBtn" class="mobile-menu-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" x2="20" y1="12" y2="12"/>
+          <line x1="4" x2="20" y1="6" y2="6"/>
+          <line x1="4" x2="20" y1="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Drawer -->
+  <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+  <nav class="mobile-nav-drawer" id="mobileNavDrawer">
+    <div class="mobile-nav-header">
+      <img src="assets/img/logo.svg" alt="TrialTrack" class="mobile-nav-logo">
+      <span class="mobile-nav-brand">TrialTrack</span>
+      <button id="closeNavBtn" class="mobile-nav-close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="mobile-nav-user">
+      <div class="avatar" id="mobileUserAvatar">?</div>
+      <div class="mobile-nav-user-info">
+        <div class="mobile-nav-user-name" id="mobileUserName">—</div>
+        <div class="mobile-nav-user-role" id="mobileUserRole">—</div>
+      </div>
+    </div>
+    <div class="mobile-nav-links">
+      <a href="dashboard.html" class="mobile-nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="7" height="9" x="3" y="3" rx="1"/>
+          <rect width="7" height="5" x="14" y="3" rx="1"/>
+          <rect width="7" height="9" x="14" y="12" rx="1"/>
+          <rect width="7" height="5" x="3" y="16" rx="1"/>
+        </svg>
+        Dashboard
+      </a>
+      <a href="analytics.html" class="mobile-nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3v18h18"/>
+          <path d="m19 9-5 5-4-4-3 3"/>
+        </svg>
+        Analytics
+      </a>
+      <a href="field-worker.html" class="mobile-nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"/>
+          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+        </svg>
+        Data Entry
+      </a>
+      <a href="admin.html" class="mobile-nav-link active">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Admin Panel
+      </a>
+    </div>
+    <div class="mobile-nav-footer">
+      <button id="mobileLogoutBtn" class="mobile-nav-link mobile-nav-logout">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" x2="9" y1="12" y2="12"/>
+        </svg>
+        Sign Out
+      </button>
+    </div>
+  </nav>
+
   <div class="dashboard-layout">
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -133,9 +215,9 @@
             </div>
 
             <!-- Role Permissions Reference -->
-            <div class="card card-sm mb-4">
+            <div class="card card-sm mb-4 role-permissions-card">
               <h4 class="text-sm font-semibold text-secondary mb-2">Role Permissions</h4>
-              <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: var(--space-2);">
+              <div class="role-permissions-grid">
                 <div class="text-xs"><strong>Superadmin:</strong> Everything</div>
                 <div class="text-xs"><strong>Admin:</strong> Manage one field</div>
                 <div class="text-xs"><strong>Viewer:</strong> View analytics</div>
@@ -788,8 +870,40 @@
     });
     elements.logoutBtn.addEventListener('click', () => auth.logout());
 
+    // Mobile Navigation
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+    const mobileNavDrawer = document.getElementById('mobileNavDrawer');
+    const closeNavBtn = document.getElementById('closeNavBtn');
+    const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+
+    function openMobileNav() {
+      mobileNavOverlay.classList.add('active');
+      mobileNavDrawer.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileNav() {
+      mobileNavOverlay.classList.remove('active');
+      mobileNavDrawer.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    mobileMenuBtn.addEventListener('click', openMobileNav);
+    mobileNavOverlay.addEventListener('click', closeMobileNav);
+    closeNavBtn.addEventListener('click', closeMobileNav);
+    mobileLogoutBtn.addEventListener('click', () => auth.logout());
+
+    // Update mobile user info
+    function updateMobileUserInfo() {
+      document.getElementById('mobileUserName').textContent = session.username;
+      document.getElementById('mobileUserRole').textContent = session.role;
+      document.getElementById('mobileUserAvatar').textContent = utils.getInitials(session.username);
+    }
+
     // Start
     if (session) {
+      updateMobileUserInfo();
       initialize();
     }
   </script>
