@@ -156,6 +156,14 @@
           <div class="export-section" id="exportSection">
             <span class="export-label">Export Data:</span>
             <div class="export-buttons">
+              <button class="btn btn-primary btn-sm" id="exportFullRound">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" x2="12" y1="15" y2="3"/>
+                </svg>
+                Full Round (CSV)
+              </button>
               <button class="btn btn-secondary btn-sm" id="exportRaw">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -315,6 +323,7 @@
       
       // Buttons
       logoutBtn: document.getElementById('logoutBtn'),
+      exportFullRound: document.getElementById('exportFullRound'),
       exportRaw: document.getElementById('exportRaw'),
       exportSummary: document.getElementById('exportSummary')
     };
@@ -480,6 +489,17 @@
     elements.paramSelect.addEventListener('change', (e) => {
       analytics.setParam(e.target.value);
       updateCharts();
+    });
+
+    elements.exportFullRound.addEventListener('click', () => {
+      if (typeof exportModule !== 'undefined') {
+        const fieldId = analytics.getCurrentField()?.id;
+        const roundFilter = analytics.getRoundFilter();
+        exportModule.exportFullRound(fieldId, roundFilter);
+        const roundLabel = roundFilter === 'current' ? 'current round' : 
+                          roundFilter === 'all' ? 'all rounds' : `round ${roundFilter}`;
+        showToast(`Exporting ${roundLabel} data...`, 'success');
+      }
     });
 
     elements.exportRaw.addEventListener('click', () => {

@@ -279,6 +279,119 @@ const exportModule = (() => {
     }
   }
 
+  /**
+   * Export full round data (all parameters) for selected round
+   * @param {string} fieldId - Field ID
+   * @param {string} roundFilter - 'current', 'all', or specific round number
+   */
+  async function exportFullRound(fieldId, roundFilter = 'current') {
+    try {
+      const roundsResult = await api.getRoundsForField(fieldId);
+      const rounds = roundsResult.data || [];
+      
+      if (rounds.length === 0) {
+        throw new Error('No rounds found');
+      }
+
+      const fieldResult = await api.getField(fieldId);
+      const field = fieldResult.data;
+      const fieldName = field?.name || 'field';
+      const date = new Date().toISOString().split('T')[0];
+
+      // Get parameter labels from the field
+      const paramLabels = field?.param_labels || ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'];
+
+      if (roundFilter === 'all') {
+        // Export all rounds in one file
+        const entriesResult = await api.getEntriesForField(fieldId);
+        const entries = entriesResult.data || [];
+        const roundsMap = new Map(rounds.map(r => [r.id, r]));
+
+        const headers = [
+          'Round', 'Plot', 'Block', 'Treatment',
+          paramLabels[0], paramLabels[1], paramLabels[2], 
+          paramLabels[3], paramLabels[4], paramLabels[5],
+          'Notes', 'Entered By', 'Date'
+        ];
+
+        const rows = entries
+          .sort((a, b) => {
+            const rA = roundsMap.get(a.round_id)?.round_number || 0;
+            const rB = roundsMap.get(b.round_id)?.round_number || 0;
+            if (rA !== rB) return rA - rB;
+            return a.plot_number - b.plot_number;
+          })
+          .map(e => {
+            const round = roundsMap.get(e.round_id);
+            return [
+              round?.round_number || '',
+              e.plot_number,
+              e.block_number,
+              e.treatment,
+              utils.formatNumber(e.p1) || '',
+              utils.formatNumber(e.p2) || '',
+              utils.formatNumber(e.p3) || '',
+              utils.formatNumber(e.p4) || '',
+              utils.formatNumber(e.p5) || '',
+              utils.formatNumber(e.p6) || '',
+              e.notes || '',
+              e.entered_by || '',
+              utils.formatDate(e.created_at)
+            ];
+          });
+
+        const csv = toCSV(headers, rows);
+        download(csv, `trialtrack_${fieldName}_all_rounds_${date}.csv`);
+
+      } else {
+        // Export specific round
+        let targetRound;
+        if (roundFilter === 'current') {
+          targetRound = rounds.sort((a, b) => b.round_number - a.round_number)[0];
+        } else {
+          targetRound = rounds.find(r => r.round_number === parseInt(roundFilter));
+        }
+
+        if (!targetRound) {
+          throw new Error('Round not found');
+        }
+
+        const entriesResult = await api.getEntriesForRound(targetRound.id);
+        const entries = entriesResult.data || [];
+
+        const headers = [
+          'Plot', 'Block', 'Treatment',
+          paramLabels[0], paramLabels[1], paramLabels[2], 
+          paramLabels[3], paramLabels[4], paramLabels[5],
+          'Notes', 'Entered By'
+        ];
+
+        const rows = entries
+          .sort((a, b) => a.plot_number - b.plot_number)
+          .map(e => [
+            e.plot_number,
+            e.block_number,
+            e.treatment,
+            utils.formatNumber(e.p1) || '',
+            utils.formatNumber(e.p2) || '',
+            utils.formatNumber(e.p3) || '',
+            utils.formatNumber(e.p4) || '',
+            utils.formatNumber(e.p5) || '',
+            utils.formatNumber(e.p6) || '',
+            e.notes || '',
+            e.entered_by || ''
+          ]);
+
+        const csv = toCSV(headers, rows);
+        download(csv, `trialtrack_${fieldName}_round${targetRound.round_number}_full_${date}.csv`);
+      }
+
+    } catch (error) {
+      console.error('Export error:', error);
+      throw error;
+    }
+  }
+
   // Public API
   return {
     toCSV,
@@ -286,7 +399,8 @@ const exportModule = (() => {
     exportRawData,
     exportSummary,
     exportBlockSummary,
-    exportCurrentRound
+    exportCurrentRound,
+    exportFullRound
   };
 })();
 
