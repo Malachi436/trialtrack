@@ -377,6 +377,84 @@ const charts = (() => {
     container.innerHTML = html;
   }
 
+  /**
+   * Create Progress Over Time Chart
+   * Shows completion percentage per round as a line/bar combination chart
+   * @param {string} canvasId - Canvas element ID
+   * @param {Object} data - { rounds: [], progress: [{ roundNumber, completedPlots, percentage }] }
+   * @returns {Chart}
+   */
+  function createProgressChart(canvasId, data) {
+    destroy(canvasId);
+
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return null;
+
+    const ctx = canvas.getContext('2d');
+    
+    instances[canvasId] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.rounds,
+        datasets: [{
+          label: 'Completion %',
+          data: data.progress.map(p => p.percentage),
+          backgroundColor: data.progress.map(p => 
+            p.percentage === 100 ? 'rgba(22, 163, 74, 0.7)' : 'rgba(59, 130, 246, 0.7)'
+          ),
+          borderColor: data.progress.map(p => 
+            p.percentage === 100 ? '#16A34A' : '#3B82F6'
+          ),
+          borderWidth: 2,
+          borderRadius: 6,
+          barThickness: 40
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const p = data.progress[context.dataIndex];
+                return [
+                  `Completed: ${p.completedPlots}/${p.totalPlots} plots`,
+                  `Percentage: ${p.percentage}%`,
+                  p.date ? `Date: ${p.date}` : ''
+                ].filter(Boolean);
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { family: "'DM Sans', sans-serif", size: 12 },
+              color: '#64748B'
+            }
+          },
+          y: {
+            min: 0,
+            max: 100,
+            grid: { color: '#E2E8F0' },
+            ticks: {
+              font: { family: "'JetBrains Mono', monospace", size: 11 },
+              color: '#94A3B8',
+              callback: (value) => value + '%'
+            }
+          }
+        }
+      }
+    });
+
+    return instances[canvasId];
+  }
+
   // Public API
   return {
     destroy,
@@ -385,6 +463,7 @@ const charts = (() => {
     createTrendLineChart,
     createCompletionDonut,
     createBlockComparisonChart,
+    createProgressChart,
     getHeatmapColor,
     generateHeatmapTable,
     treatmentColors

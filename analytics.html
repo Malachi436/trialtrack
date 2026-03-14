@@ -133,6 +133,13 @@
               <select class="chart-control-select" id="fieldSelect"></select>
             </div>
             <div class="chart-control-group">
+              <label class="chart-control-label">Round</label>
+              <select class="chart-control-select" id="roundSelect">
+                <option value="current">Current Round</option>
+                <option value="all">All Rounds (Avg)</option>
+              </select>
+            </div>
+            <div class="chart-control-group">
               <label class="chart-control-label">Parameter</label>
               <select class="chart-control-select" id="paramSelect">
                 <option value="p1">Parameter 1</option>
@@ -235,16 +242,18 @@
             </div>
           </div>
 
-          <!-- Heatmap -->
+          <!-- Progress Over Time (Main Chart - replaces Heatmap) -->
           <div class="chart-card" style="margin-top: var(--space-4);">
             <div class="chart-card-header">
               <div>
-                <h3 class="chart-card-title">Plot Performance Heatmap</h3>
-                <p class="chart-card-subtitle">All plots across all rounds — click a cell for details</p>
+                <h3 class="chart-card-title">Data Collection Progress</h3>
+                <p class="chart-card-subtitle">Completion percentage by round — green = 100% complete</p>
               </div>
             </div>
-            <div class="chart-card-body" style="min-height: auto; padding: var(--space-4);">
-              <div class="heatmap-container" id="heatmapContainer"></div>
+            <div class="chart-card-body">
+              <div class="chart-container tall">
+                <canvas id="progressChart"></canvas>
+              </div>
             </div>
           </div>
         </div>
@@ -288,6 +297,7 @@
       
       // Controls
       fieldSelect: document.getElementById('fieldSelect'),
+      roundSelect: document.getElementById('roundSelect'),
       paramSelect: document.getElementById('paramSelect'),
       
       // User info
@@ -299,9 +309,6 @@
       barChartSubtitle: document.getElementById('barChartSubtitle'),
       donutSubtitle: document.getElementById('donutSubtitle'),
       donutValue: document.getElementById('donutValue'),
-      
-      // Heatmap
-      heatmapContainer: document.getElementById('heatmapContainer'),
       
       // Admin section
       adminNavSection: document.getElementById('adminNavSection'),
@@ -364,6 +371,20 @@
       ).join('');
     }
 
+    function renderRoundSelect() {
+      const availableRounds = analytics.getAvailableRounds();
+      let options = `
+        <option value="current">Current Round</option>
+        <option value="all">All Rounds (Avg)</option>
+      `;
+      
+      availableRounds.forEach(r => {
+        options += `<option value="${r.round_number}">Round ${r.round_number}</option>`;
+      });
+      
+      elements.roundSelect.innerHTML = options;
+    }
+
     function renderParamLabels() {
       const labels = analytics.getParamLabels();
       elements.paramSelect.innerHTML = labels.map((label, i) => 
@@ -376,11 +397,14 @@
       if (!field) return;
 
       const paramName = analytics.getParamLabels()[parseInt(elements.paramSelect.value.slice(1)) - 1];
+      const roundFilter = analytics.getRoundFilter();
+      const roundLabel = roundFilter === 'current' ? 'Current Round' : 
+                        roundFilter === 'all' ? 'All Rounds' : `Round ${roundFilter}`;
       
       // Treatment Bar Chart
       const barData = analytics.getTreatmentBarData();
       charts.createTreatmentBarChart('treatmentBarChart', barData, paramName);
-      elements.barChartSubtitle.textContent = `Current Round — ${paramName}`;
+      elements.barChartSubtitle.textContent = `${roundLabel} — ${paramName}`;
 
       // Trend Line Chart
       const trendData = analytics.getTrendData();
@@ -396,9 +420,9 @@
       const blockData = analytics.getBlockData();
       charts.createBlockComparisonChart('blockChart', blockData);
 
-      // Heatmap
-      const heatmapData = analytics.getHeatmapData();
-      charts.generateHeatmapTable(heatmapData, 'heatmapContainer');
+      // Progress Over Time Chart (main chart)
+      const progressData = analytics.getProgressOverTimeData();
+      charts.createProgressChart('progressChart', progressData);
     }
 
     // ============================================
@@ -422,6 +446,7 @@
         }
 
         renderFieldSelect(result.fields);
+        renderRoundSelect();
         renderParamLabels();
         updateCharts();
 
@@ -442,7 +467,13 @@
 
     elements.fieldSelect.addEventListener('change', (e) => {
       analytics.setField(e.target.value);
+      renderRoundSelect();
       renderParamLabels();
+      updateCharts();
+    });
+
+    elements.roundSelect.addEventListener('change', (e) => {
+      analytics.setRoundFilter(e.target.value);
       updateCharts();
     });
 

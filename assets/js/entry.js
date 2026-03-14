@@ -1,7 +1,7 @@
 /**
  * TrialTrack — Entry Module
  * Data entry flow logic for field workers
- * Parameter-focused workflow: Select parameter → Select block → Enter data for all plots
+ * Parameter-focused workflow: Must complete ALL blocks for a parameter before moving to next
  */
 
 const entry = (() => {
@@ -104,7 +104,7 @@ const entry = (() => {
   /**
    * Get progress for a specific parameter
    * @param {number} paramNum - Parameter number (1-6)
-   * @returns {Object} - { completed, total, percentage }
+   * @returns {Object} - { completed, total, percentage, isComplete }
    */
   function getParameterProgress(paramNum) {
     let completed = 0;
@@ -113,7 +113,58 @@ const entry = (() => {
         completed++;
       }
     }
-    return { completed, total: 5, percentage: Math.round((completed / 5) * 100) };
+    return { 
+      completed, 
+      total: 5, 
+      percentage: Math.round((completed / 5) * 100),
+      isComplete: completed === 5
+    };
+  }
+
+  /**
+   * Check if a parameter is fully complete (all 5 blocks)
+   * @param {number} paramNum
+   * @returns {boolean}
+   */
+  function isParameterComplete(paramNum) {
+    return getParameterProgress(paramNum).isComplete;
+  }
+
+  /**
+   * Get the first incomplete parameter (for auto-selection)
+   * @returns {number|null} - Parameter number (1-6) or null if all complete
+   */
+  function getFirstIncompleteParameter() {
+    for (let p = 1; p <= 6; p++) {
+      if (!isParameterComplete(p)) {
+        return p;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get the next incomplete block for a parameter
+   * @param {number} paramNum
+   * @returns {number|null} - Block number (1-5) or null if all complete
+   */
+  function getNextIncompleteBlock(paramNum) {
+    for (let b = 1; b <= 5; b++) {
+      if (!completedParamBlocks.has(`p${paramNum}_b${b}`)) {
+        return b;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Check if user can select a different parameter
+   * Only allowed if current parameter is complete or no parameter selected
+   * @returns {boolean}
+   */
+  function canChangeParameter() {
+    if (!currentParameter) return true;
+    return isParameterComplete(currentParameter);
   }
 
   /**
@@ -129,10 +180,16 @@ const entry = (() => {
   /**
    * Set the current parameter
    * @param {number} paramNumber - Parameter number (1-6)
+   * @returns {boolean} - Whether selection was allowed
    */
   function selectParameter(paramNumber) {
+    // Can only change if current is complete or none selected
+    if (currentParameter && !isParameterComplete(currentParameter)) {
+      return false;
+    }
     currentParameter = paramNumber;
     currentBlock = null;
+    return true;
   }
 
   /**
@@ -188,6 +245,27 @@ const entry = (() => {
     if (!currentParameter) return '';
     const labels = getParameterLabels();
     return labels[currentParameter - 1];
+  }
+
+  /**
+   * Get current context for progress indicator
+   * @returns {Object}
+   */
+  function getCurrentContext() {
+    const labels = getParameterLabels();
+    const paramProgress = currentParameter ? getParameterProgress(currentParameter) : null;
+    const overallProgress = getProgress();
+    
+    return {
+      parameter: currentParameter,
+      parameterLabel: currentParameter ? labels[currentParameter - 1] : null,
+      block: currentBlock,
+      parameterProgress: paramProgress,
+      overallProgress: overallProgress,
+      totalParams: 6,
+      totalBlocks: 5,
+      completedParams: [1,2,3,4,5,6].filter(p => isParameterComplete(p)).length
+    };
   }
 
   /**
@@ -332,12 +410,17 @@ const entry = (() => {
     canEnter,
     getProgress,
     getParameterProgress,
+    isParameterComplete,
+    getFirstIncompleteParameter,
+    getNextIncompleteBlock,
+    canChangeParameter,
     isParamBlockComplete,
     selectParameter,
     selectBlock,
     getBlockParameterData,
     getParameterLabels,
     getCurrentParameterLabel,
+    getCurrentContext,
     saveBlockParameter,
     resetSelection,
     getState

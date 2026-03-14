@@ -19,6 +19,66 @@
   <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg">
   
   <style>
+    /* Progress indicator - sticky bar */
+    .progress-indicator {
+      position: sticky;
+      top: 56px;
+      z-index: 100;
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+      color: white;
+      padding: var(--space-3) var(--space-4);
+      margin: 0 calc(-1 * var(--space-4));
+      margin-bottom: var(--space-4);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    .progress-indicator-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-2);
+      text-align: center;
+    }
+    
+    .progress-indicator-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .progress-indicator-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      opacity: 0.8;
+      letter-spacing: 0.5px;
+    }
+    
+    .progress-indicator-value {
+      font-size: var(--text-md);
+      font-weight: 700;
+    }
+    
+    .progress-indicator-bar {
+      margin-top: var(--space-2);
+      background: rgba(255,255,255,0.3);
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    
+    .progress-indicator-bar-fill {
+      height: 100%;
+      background: white;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+    
+    .progress-indicator-text {
+      margin-top: var(--space-1);
+      font-size: 11px;
+      text-align: center;
+      opacity: 0.9;
+    }
+
     /* Parameter selector styles */
     .param-selector {
       display: flex;
@@ -45,14 +105,25 @@
       transition: all var(--transition-fast);
     }
     
-    .param-btn:hover {
+    .param-btn:hover:not(.locked) {
       border-color: var(--color-primary);
       background: var(--color-primary-light);
     }
     
-    .param-btn.selected {
+    .param-btn.active {
       border-color: var(--color-primary);
       background: var(--color-primary-light);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+    
+    .param-btn.complete {
+      border-color: var(--color-success);
+      background: rgba(16, 185, 129, 0.1);
+    }
+    
+    .param-btn.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
     
     .param-btn-content {
@@ -74,6 +145,10 @@
       font-size: var(--text-sm);
     }
     
+    .param-btn.complete .param-btn-number {
+      background: var(--color-success);
+    }
+    
     .param-btn-label {
       font-weight: 500;
       color: var(--color-text-primary);
@@ -91,6 +166,10 @@
       color: var(--color-success);
     }
     
+    .param-btn-lock {
+      color: var(--color-text-muted);
+    }
+
     /* Block entry form styles */
     .block-entry-header {
       display: flex;
@@ -131,12 +210,13 @@
       display: flex;
       align-items: center;
       gap: var(--space-2);
-      min-width: 80px;
+      min-width: 90px;
     }
     
     .plot-entry-number {
       font-weight: 600;
       color: var(--color-text-primary);
+      font-size: var(--text-sm);
     }
     
     .plot-entry-input {
@@ -160,6 +240,30 @@
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
+    }
+    
+    /* Complete all message */
+    .complete-message {
+      text-align: center;
+      padding: var(--space-6);
+    }
+    
+    .complete-message-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto var(--space-4);
+      color: var(--color-success);
+    }
+    
+    .complete-message-title {
+      font-size: var(--text-xl);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: var(--space-2);
+    }
+    
+    .complete-message-text {
+      color: var(--color-text-secondary);
     }
   </style>
 </head>
@@ -198,7 +302,7 @@
         </div>
       </div>
 
-      <!-- Field Status -->
+      <!-- Field Status Card -->
       <div id="fieldStatus" class="hidden">
         <div class="field-status-card">
           <h2 class="field-status-name" id="fieldName">—</h2>
@@ -214,17 +318,28 @@
             <span class="field-status-round-number" id="roundNumber">—</span>
           </div>
         </div>
+      </div>
 
-        <!-- Progress -->
-        <div class="progress-card">
-          <div class="progress-header">
-            <span class="progress-title">Overall Progress</span>
-            <span class="progress-count"><span id="progressEntered">0</span>/30</span>
+      <!-- Progress Indicator (sticky during data entry) -->
+      <div id="progressIndicator" class="progress-indicator hidden">
+        <div class="progress-indicator-grid">
+          <div class="progress-indicator-item">
+            <span class="progress-indicator-label">Parameter</span>
+            <span class="progress-indicator-value" id="indicatorParam">—</span>
           </div>
-          <div class="progress-bar-wrapper">
-            <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
+          <div class="progress-indicator-item">
+            <span class="progress-indicator-label">Block</span>
+            <span class="progress-indicator-value" id="indicatorBlock">—</span>
+          </div>
+          <div class="progress-indicator-item">
+            <span class="progress-indicator-label">Overall</span>
+            <span class="progress-indicator-value" id="indicatorOverall">0%</span>
           </div>
         </div>
+        <div class="progress-indicator-bar">
+          <div class="progress-indicator-bar-fill" id="indicatorBarFill" style="width: 0%"></div>
+        </div>
+        <div class="progress-indicator-text" id="indicatorText">Parameter 1/6 • Block 1/5</div>
       </div>
 
       <!-- Locked State (outside window) -->
@@ -237,8 +352,7 @@
         <p class="locked-message" id="lockedMessage">Next round opens in X days</p>
         <div class="locked-countdown" id="lockedCountdown">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 22h14"/>
-            <path d="M5 2h14"/>
+            <path d="M5 22h14"/><path d="M5 2h14"/>
             <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/>
             <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
           </svg>
@@ -246,9 +360,10 @@
         </div>
       </div>
 
-      <!-- Parameter Selector (NEW - Step 1) -->
+      <!-- Parameter Selector (Step 1) -->
       <div id="paramSelector" class="param-selector hidden">
-        <h3 class="param-selector-title">Select Parameter to Enter</h3>
+        <h3 class="param-selector-title">Select Parameter</h3>
+        <p class="text-sm text-secondary mb-3">Complete all 5 blocks for each parameter before moving to the next.</p>
         <div id="paramBtnContainer">
           <!-- Parameter buttons injected dynamically -->
         </div>
@@ -259,21 +374,15 @@
         <div class="flex items-center justify-between mb-3">
           <div>
             <h3 class="block-selector-title mb-0">Select Block</h3>
-            <p class="text-sm text-secondary mt-1">Entering: <strong id="currentParamName">—</strong></p>
+            <p class="text-sm text-secondary mt-1">Parameter: <strong id="currentParamName">—</strong></p>
           </div>
-          <button id="backToParams" class="btn btn-ghost btn-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m15 18-6-6 6-6"/>
-            </svg>
-            Back
-          </button>
         </div>
         <div class="block-grid" id="blockGrid">
           <!-- Block buttons injected dynamically -->
         </div>
       </div>
 
-      <!-- Block Entry Form (Step 3 - NEW) -->
+      <!-- Block Entry Form (Step 3) -->
       <div id="blockEntryForm" class="hidden">
         <div class="block-entry-header">
           <div>
@@ -295,26 +404,22 @@
           
           <div class="block-entry-actions">
             <button type="submit" id="saveBlockBtn" class="btn btn-primary btn-lg btn-block">
-              <span id="saveBlockBtnText">Save All Entries</span>
+              <span id="saveBlockBtnText">Save & Continue</span>
               <span id="saveBlockBtnSpinner" class="spinner spinner-white hidden"></span>
             </button>
           </div>
         </form>
       </div>
 
-      <!-- Success State -->
-      <div id="successState" class="success-card hidden">
-        <svg class="success-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <!-- All Complete State -->
+      <div id="completeState" class="complete-message hidden">
+        <svg class="complete-message-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
           <path d="m9 11 3 3L22 4"/>
         </svg>
-        <h3 class="success-title">Data Saved!</h3>
-        <p class="success-message" id="successMessage">Block data recorded successfully.</p>
-        <div class="success-actions">
-          <button id="nextBlockBtn" class="btn btn-primary btn-lg btn-block">Next Block</button>
-          <button id="nextParamBtn" class="btn btn-secondary btn-block">Next Parameter</button>
-          <button id="backToOverviewBtn" class="btn btn-ghost btn-block">Back to Overview</button>
-        </div>
+        <h3 class="complete-message-title">All Data Collected!</h3>
+        <p class="complete-message-text">You have completed all parameters for this round.</p>
+        <button id="reviewDataBtn" class="btn btn-primary btn-lg mt-4">Review Data</button>
       </div>
     </main>
   </div>
@@ -334,7 +439,6 @@
     // AUTH & INITIALIZATION
     // ============================================
     
-    // Check auth - allow user, admin, and superadmin (for testing)
     const session = auth.requireRole([CONFIG.ROLES.USER, CONFIG.ROLES.ADMIN, CONFIG.ROLES.SUPERADMIN]);
     if (!session) {
       // Will redirect to login
@@ -345,20 +449,24 @@
       loadingState: document.getElementById('loadingState'),
       noFieldState: document.getElementById('noFieldState'),
       fieldStatus: document.getElementById('fieldStatus'),
+      progressIndicator: document.getElementById('progressIndicator'),
       lockedState: document.getElementById('lockedState'),
       paramSelector: document.getElementById('paramSelector'),
       blockSelector: document.getElementById('blockSelector'),
       blockEntryForm: document.getElementById('blockEntryForm'),
-      successState: document.getElementById('successState'),
+      completeState: document.getElementById('completeState'),
       
       // Field info
       fieldName: document.getElementById('fieldName'),
       fieldLocation: document.getElementById('fieldLocation'),
       roundNumber: document.getElementById('roundNumber'),
       
-      // Progress
-      progressEntered: document.getElementById('progressEntered'),
-      progressBar: document.getElementById('progressBar'),
+      // Progress indicator
+      indicatorParam: document.getElementById('indicatorParam'),
+      indicatorBlock: document.getElementById('indicatorBlock'),
+      indicatorOverall: document.getElementById('indicatorOverall'),
+      indicatorBarFill: document.getElementById('indicatorBarFill'),
+      indicatorText: document.getElementById('indicatorText'),
       
       // Locked state
       lockedMessage: document.getElementById('lockedMessage'),
@@ -380,16 +488,10 @@
       saveBlockBtnText: document.getElementById('saveBlockBtnText'),
       saveBlockBtnSpinner: document.getElementById('saveBlockBtnSpinner'),
       
-      // Success
-      successMessage: document.getElementById('successMessage'),
-      
       // Buttons
       logoutBtn: document.getElementById('logoutBtn'),
-      backToParams: document.getElementById('backToParams'),
       backToBlocks: document.getElementById('backToBlocks'),
-      nextBlockBtn: document.getElementById('nextBlockBtn'),
-      nextParamBtn: document.getElementById('nextParamBtn'),
-      backToOverviewBtn: document.getElementById('backToOverviewBtn')
+      reviewDataBtn: document.getElementById('reviewDataBtn')
     };
 
     // State
@@ -408,11 +510,12 @@
       elements.loadingState.classList.add('hidden');
       elements.noFieldState.classList.add('hidden');
       elements.fieldStatus.classList.add('hidden');
+      elements.progressIndicator.classList.add('hidden');
       elements.lockedState.classList.add('hidden');
       elements.paramSelector.classList.add('hidden');
       elements.blockSelector.classList.add('hidden');
       elements.blockEntryForm.classList.add('hidden');
-      elements.successState.classList.add('hidden');
+      elements.completeState.classList.add('hidden');
       
       // Show specific view
       switch (viewName) {
@@ -432,17 +535,56 @@
           break;
         case 'blocks':
           elements.fieldStatus.classList.remove('hidden');
+          elements.progressIndicator.classList.remove('hidden');
           elements.blockSelector.classList.remove('hidden');
           break;
         case 'entry':
           elements.fieldStatus.classList.remove('hidden');
+          elements.progressIndicator.classList.remove('hidden');
           elements.blockEntryForm.classList.remove('hidden');
           break;
-        case 'success':
+        case 'complete':
           elements.fieldStatus.classList.remove('hidden');
-          elements.successState.classList.remove('hidden');
+          elements.completeState.classList.remove('hidden');
           break;
       }
+      
+      updateProgressIndicator();
+    }
+
+    // ============================================
+    // PROGRESS INDICATOR
+    // ============================================
+
+    function updateProgressIndicator() {
+      const ctx = entry.getCurrentContext();
+      
+      if (ctx.parameter) {
+        elements.indicatorParam.textContent = `P${ctx.parameter}`;
+      } else {
+        elements.indicatorParam.textContent = '—';
+      }
+      
+      if (ctx.block) {
+        elements.indicatorBlock.textContent = ctx.block;
+      } else {
+        elements.indicatorBlock.textContent = '—';
+      }
+      
+      elements.indicatorOverall.textContent = `${ctx.overallProgress.percentage}%`;
+      elements.indicatorBarFill.style.width = `${ctx.overallProgress.percentage}%`;
+      
+      // Build status text
+      let text = '';
+      if (ctx.parameter && ctx.parameterProgress) {
+        text = `${ctx.parameterLabel}: ${ctx.parameterProgress.completed}/5 blocks`;
+        if (ctx.block) {
+          text += ` • Entering Block ${ctx.block}`;
+        }
+      } else {
+        text = `${ctx.completedParams}/6 parameters complete`;
+      }
+      elements.indicatorText.textContent = text;
     }
 
     // ============================================
@@ -469,10 +611,8 @@
         </div>
       `;
 
-      const container = document.getElementById('toastContainer');
-      container.appendChild(toast);
+      document.getElementById('toastContainer').appendChild(toast);
 
-      // Auto-remove after 4 seconds
       setTimeout(() => {
         toast.classList.add('toast-exit');
         setTimeout(() => toast.remove(), 200);
@@ -493,20 +633,6 @@
         const windowStatus = entry.getWindowStatus();
         elements.roundNumber.textContent = `Round ${windowStatus.roundNumber}`;
       }
-      
-      updateProgress();
-    }
-
-    function updateProgress() {
-      const progress = entry.getProgress();
-      elements.progressEntered.textContent = progress.entered;
-      elements.progressBar.style.width = `${progress.percentage}%`;
-      
-      if (progress.percentage === 100) {
-        elements.progressBar.classList.add('complete');
-      } else {
-        elements.progressBar.classList.remove('complete');
-      }
     }
 
     // ============================================
@@ -515,40 +641,54 @@
 
     function renderParamSelector() {
       const labels = entry.getParameterLabels();
+      const firstIncomplete = entry.getFirstIncompleteParameter();
       
       elements.paramBtnContainer.innerHTML = labels.map((label, index) => {
         const paramNum = index + 1;
         const progress = entry.getParameterProgress(paramNum);
-        const isComplete = progress.percentage === 100;
+        const isComplete = progress.isComplete;
+        const isActive = paramNum === firstIncomplete;
+        const isLocked = !isComplete && paramNum !== firstIncomplete;
+        
+        let statusHtml = '';
+        if (isComplete) {
+          statusHtml = `<svg class="param-btn-check" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>
+          </svg>`;
+        } else if (isLocked) {
+          statusHtml = `<svg class="param-btn-lock" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>`;
+        } else {
+          statusHtml = `<span>${progress.completed}/5</span>`;
+        }
         
         return `
-          <button type="button" class="param-btn" data-param="${paramNum}">
+          <button type="button" class="param-btn ${isComplete ? 'complete' : ''} ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}" 
+                  data-param="${paramNum}" ${isLocked ? 'disabled' : ''}>
             <div class="param-btn-content">
               <span class="param-btn-number">P${paramNum}</span>
               <span class="param-btn-label">${utils.escapeHtml(label)}</span>
             </div>
-            <div class="param-btn-progress">
-              ${isComplete ? `
-                <svg class="param-btn-check" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <path d="m9 11 3 3L22 4"/>
-                </svg>
-              ` : `${progress.completed}/5 blocks`}
-            </div>
+            <div class="param-btn-progress">${statusHtml}</div>
           </button>
         `;
       }).join('');
       
       // Add click handlers
-      elements.paramBtnContainer.querySelectorAll('.param-btn').forEach(btn => {
+      elements.paramBtnContainer.querySelectorAll('.param-btn:not(.locked)').forEach(btn => {
         btn.addEventListener('click', () => selectParameter(parseInt(btn.dataset.param)));
       });
     }
 
     function selectParameter(paramNum) {
-      selectedParam = paramNum;
-      entry.selectParameter(paramNum);
+      const allowed = entry.selectParameter(paramNum);
+      if (!allowed) {
+        showToast('Complete all blocks for the current parameter first.', 'warning');
+        return;
+      }
       
+      selectedParam = paramNum;
       const labels = entry.getParameterLabels();
       elements.currentParamName.textContent = labels[paramNum - 1];
       
@@ -567,11 +707,10 @@
         const isComplete = entry.isParamBlockComplete(selectedParam, block);
         
         html.push(`
-          <button class="block-btn ${isComplete ? 'entered' : ''}" data-block="${block}">
+          <button class="block-btn ${isComplete ? 'entered' : ''}" data-block="${block}" style="position: relative;">
             ${isComplete ? `
-              <svg class="block-entered-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; color: var(--color-success);">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <path d="m9 11 3 3L22 4"/>
+              <svg style="position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; color: var(--color-success);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>
               </svg>
             ` : ''}
             <span>${block}</span>
@@ -626,6 +765,7 @@
               data-plot="${plot.plot}"
               value="${existingValue}"
               placeholder="Enter value"
+              required
             >
           </div>
         `;
@@ -639,7 +779,7 @@
     }
 
     // ============================================
-    // FORM SUBMISSION
+    // FORM SUBMISSION & AUTO-NAVIGATION
     // ============================================
 
     let isSaving = false;
@@ -671,15 +811,49 @@
       isSaving = false;
       
       if (result.success) {
-        const labels = entry.getParameterLabels();
-        elements.successMessage.textContent = `Block ${selectedBlock} - ${labels[selectedParam - 1]} data saved (${result.savedCount} plots).`;
+        showToast('Block saved!', 'success');
         
-        updateProgress();
-        renderParamSelector(); // Update progress indicators
-        showView('success');
-        showToast('Data saved successfully!', 'success');
+        // Auto-navigate to next incomplete block or parameter
+        autoNavigateNext();
       } else {
         showToast(result.error || 'Failed to save data.', 'error');
+      }
+    }
+
+    function autoNavigateNext() {
+      // Check if current parameter has more blocks
+      const nextBlock = entry.getNextIncompleteBlock(selectedParam);
+      
+      if (nextBlock) {
+        // Go to next block for same parameter
+        selectBlock(nextBlock);
+        showToast(`Moving to Block ${nextBlock}...`, 'info');
+      } else {
+        // Parameter complete! Check for next parameter
+        const nextParam = entry.getFirstIncompleteParameter();
+        
+        if (nextParam) {
+          // Show message and auto-select next parameter
+          showToast(`Parameter complete! Moving to next...`, 'success');
+          entry.selectParameter(nextParam);
+          selectedParam = nextParam;
+          
+          const labels = entry.getParameterLabels();
+          elements.currentParamName.textContent = labels[nextParam - 1];
+          
+          // Go to first block of new parameter
+          const firstBlock = entry.getNextIncompleteBlock(nextParam);
+          if (firstBlock) {
+            selectBlock(firstBlock);
+          } else {
+            renderBlockSelector();
+            showView('blocks');
+          }
+        } else {
+          // All complete!
+          showView('complete');
+          showToast('All data collected for this round!', 'success');
+        }
       }
     }
 
@@ -687,56 +861,17 @@
     // NAVIGATION
     // ============================================
 
+    function goToBlocks() {
+      renderBlockSelector();
+      showView('blocks');
+    }
+
     function goToParams() {
       entry.resetSelection();
       selectedParam = null;
       selectedBlock = null;
       renderParamSelector();
       showView('params');
-    }
-
-    function goToBlocks() {
-      selectedBlock = null;
-      renderBlockSelector();
-      showView('blocks');
-    }
-
-    function goToNextBlock() {
-      // Find next incomplete block for current parameter
-      let nextBlock = null;
-      for (let b = 1; b <= 5; b++) {
-        if (!entry.isParamBlockComplete(selectedParam, b)) {
-          nextBlock = b;
-          break;
-        }
-      }
-      
-      if (nextBlock) {
-        selectBlock(nextBlock);
-      } else {
-        // All blocks done for this parameter, go to next parameter
-        goToNextParam();
-      }
-    }
-
-    function goToNextParam() {
-      // Find next incomplete parameter
-      let nextParam = null;
-      for (let p = 1; p <= 6; p++) {
-        const progress = entry.getParameterProgress(p);
-        if (progress.percentage < 100) {
-          nextParam = p;
-          break;
-        }
-      }
-      
-      if (nextParam) {
-        selectParameter(nextParam);
-      } else {
-        // All done!
-        goToParams();
-        showToast('All parameters complete for this round!', 'success');
-      }
     }
 
     // ============================================
@@ -789,9 +924,27 @@
           }
           showView('locked');
         } else {
-          // Show parameter selector
-          renderParamSelector();
-          showView('params');
+          // Check if all complete
+          const progress = entry.getProgress();
+          if (progress.percentage === 100) {
+            showView('complete');
+          } else {
+            // Auto-select first incomplete parameter and show block selector
+            const firstParam = entry.getFirstIncompleteParameter();
+            if (firstParam) {
+              entry.selectParameter(firstParam);
+              selectedParam = firstParam;
+              
+              const labels = entry.getParameterLabels();
+              elements.currentParamName.textContent = labels[firstParam - 1];
+              
+              renderBlockSelector();
+              showView('blocks');
+            } else {
+              renderParamSelector();
+              showView('params');
+            }
+          }
         }
         
       } catch (error) {
@@ -804,17 +957,9 @@
     // EVENT LISTENERS
     // ============================================
 
-    // Logout
     elements.logoutBtn.addEventListener('click', () => auth.logout());
-
-    // Navigation
-    elements.backToParams.addEventListener('click', goToParams);
     elements.backToBlocks.addEventListener('click', goToBlocks);
-    elements.nextBlockBtn.addEventListener('click', goToNextBlock);
-    elements.nextParamBtn.addEventListener('click', goToNextParam);
-    elements.backToOverviewBtn.addEventListener('click', goToParams);
-
-    // Form submission
+    elements.reviewDataBtn.addEventListener('click', goToParams);
     elements.blockDataForm.addEventListener('submit', handleBlockSubmit);
 
     // Start app

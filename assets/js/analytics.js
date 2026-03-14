@@ -7,6 +7,7 @@ const analytics = (() => {
   // State
   let currentFieldId = null;
   let currentParam = 'p1';
+  let currentRoundFilter = 'current'; // 'current', 'all', or specific round number
   let fields = [];
   let rounds = [];
   let entries = [];
@@ -75,6 +76,21 @@ const analytics = (() => {
   }
 
   /**
+   * Set round filter
+   * @param {string|number} filter - 'current', 'all', or specific round number
+   */
+  function setRoundFilter(filter) {
+    currentRoundFilter = filter;
+  }
+
+  /**
+   * Get current round filter
+   */
+  function getRoundFilter() {
+    return currentRoundFilter;
+  }
+
+  /**
    * Get current field
    */
   function getCurrentField() {
@@ -82,27 +98,46 @@ const analytics = (() => {
   }
 
   /**
+   * Get the target round based on filter
+   */
+  function getTargetRound() {
+    const fieldRounds = rounds.filter(r => r.field_id === currentFieldId);
+    
+    if (currentRoundFilter === 'current') {
+      return fieldRounds.sort((a, b) => b.round_number - a.round_number)[0];
+    } else if (currentRoundFilter === 'all') {
+      return null; // All rounds
+    } else {
+      return fieldRounds.find(r => r.round_number === parseInt(currentRoundFilter));
+    }
+  }
+
+  /**
    * Get treatment bar chart data
    */
-  function getTreatmentBarData(roundNumber = null) {
+  function getTreatmentBarData() {
     const fieldRounds = rounds.filter(r => r.field_id === currentFieldId);
-    let targetRound = roundNumber
-      ? fieldRounds.find(r => r.round_number === roundNumber)
-      : fieldRounds.sort((a, b) => b.round_number - a.round_number)[0];
-
-    if (!targetRound) {
-      return CONFIG.TREATMENT_ORDER.map(t => ({
-        treatment: t,
-        value: 0,
-        label: CONFIG.TREATMENTS[t]
-      }));
+    let targetEntries;
+    
+    if (currentRoundFilter === 'all') {
+      // Average across all rounds
+      targetEntries = entries.filter(e => e.field_id === currentFieldId);
+    } else {
+      const targetRound = getTargetRound();
+      if (!targetRound) {
+        return CONFIG.TREATMENT_ORDER.map(t => ({
+          treatment: t,
+          value: 0,
+          label: CONFIG.TREATMENTS[t]
+        }));
+      }
+      targetEntries = entries.filter(e => e.round_id === targetRound.id);
     }
 
-    const roundEntries = entries.filter(e => e.round_id === targetRound.id);
     const values = {};
 
     CONFIG.TREATMENT_ORDER.forEach(t => {
-      const treatmentEntries = roundEntries.filter(e => e.treatment === t);
+      const treatmentEntries = targetEntries.filter(e => e.treatment === t);
       const paramValues = treatmentEntries
         .map(e => e[currentParam])
         .filter(v => v !== null && v !== undefined);
@@ -152,44 +187,82 @@ const analytics = (() => {
   }
 
   /**
+   * Get progress over time data - shows completion percentage per round
+   */
+  function getProgressOverTimeData() {
+    const fieldRounds = rounds
+      .filter(r => r.field_id === currentFieldId)
+      .sort((a, b) => a.round_number - b.round_number);
+
+    if (fieldRounds.length === 0) {
+      return { rounds: [], progress: [] };
+    }
+
+    const progress = fieldRounds.map(round => {
+      const roundEntries = entries.filter(e => e.round_id === round.id);
+      const uniquePlots = new Set(roundEntries.map(e => e.plot_number));
+      const percentage = Math.round((uniquePlots.size / CONFIG.TOTAL_PLOTS) * 100);
+      return {
+        roundNumber: round.round_number,
+        completedPlots: uniquePlots.size,
+        totalPlots: CONFIG.TOTAL_PLOTS,
+        percentage,
+        date: round.recorded_date
+      };
+    });
+
+    return {
+      rounds: fieldRounds.map(r => `R${r.round_number}`),
+      progress
+    };
+  }
+
+  /**
    * Get completion donut data
    */
   function getCompletionData() {
     const fieldRounds = rounds.filter(r => r.field_id === currentFieldId);
-    const latestRound = fieldRounds.sort((a, b) => b.round_number - a.round_number)[0];
-
-    if (!latestRound) {
-      return { entered: 0, total: CONFIG.TOTAL_PLOTS };
+    let targetRound;
+    
+    if (currentRoundFilter === 'all' || currentRoundFilter === 'current') {
+      targetRound = fieldRounds.sort((a, b) => b.round_number - a.round_number)[0];
+    } else {
+      targetRound = fieldRounds.find(r => r.round_number === parseInt(currentRoundFilter));
     }
 
-    const roundEntries = entries.filter(e => e.round_id === latestRound.id);
+    if (!targetRound) {
+      return { entered: 0, total: CONFIG.TOTAL_PLOTS, roundNumber: null };
+    }
+
+    const roundEntries = entries.filter(e => e.round_id === targetRound.id);
     const enteredPlots = new Set(roundEntries.map(e => e.plot_number));
 
     return {
       entered: enteredPlots.size,
       total: CONFIG.TOTAL_PLOTS,
-      roundNumber: latestRound.round_number
+      roundNumber: targetRound.round_number
     };
   }
 
   /**
    * Get block comparison data
    */
-  function getBlockData(roundNumber = null) {
+  function getBlockData() {
     const fieldRounds = rounds.filter(r => r.field_id === currentFieldId);
-    const targetRound = roundNumber
-      ? fieldRounds.find(r => r.round_number === roundNumber)
-      : fieldRounds.sort((a, b) => b.round_number - a.round_number)[0];
-
-    if (!targetRound) {
-      return [];
+    let targetEntries;
+    
+    if (currentRoundFilter === 'all') {
+      targetEntries = entries.filter(e => e.field_id === currentFieldId);
+    } else {
+      const targetRound = getTargetRound();
+      if (!targetRound) return [];
+      targetEntries = entries.filter(e => e.round_id === targetRound.id);
     }
 
-    const roundEntries = entries.filter(e => e.round_id === targetRound.id);
     const data = [];
 
     for (let block = 1; block <= CONFIG.BLOCKS_PER_FIELD; block++) {
-      const blockEntries = roundEntries.filter(e => e.block_number === block);
+      const blockEntries = targetEntries.filter(e => e.block_number === block);
       const treatments = {};
 
       CONFIG.TREATMENT_ORDER.forEach(t => {
@@ -276,9 +349,12 @@ const analytics = (() => {
     init,
     setField,
     setParam,
+    setRoundFilter,
+    getRoundFilter,
     getCurrentField,
     getTreatmentBarData,
     getTrendData,
+    getProgressOverTimeData,
     getCompletionData,
     getBlockData,
     getHeatmapData,

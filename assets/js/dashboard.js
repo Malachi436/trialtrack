@@ -6,6 +6,7 @@
 const dashboard = (() => {
   // State
   let currentFieldId = null;
+  let selectedCollectionFieldId = null; // For data collection filter
   let fields = [];
   let users = [];
   let rounds = [];
@@ -225,6 +226,116 @@ const dashboard = (() => {
     await loadInitialData();
   }
 
+  /**
+   * Set selected field for data collection section
+   * @param {string} fieldId
+   */
+  function setCollectionField(fieldId) {
+    selectedCollectionFieldId = fieldId;
+  }
+
+  /**
+   * Get selected collection field ID
+   * @returns {string|null}
+   */
+  function getCollectionFieldId() {
+    return selectedCollectionFieldId;
+  }
+
+  /**
+   * Get all fields for dropdown
+   * @returns {Array}
+   */
+  function getFields() {
+    return fields;
+  }
+
+  /**
+   * Get data collection status for a specific field
+   * @param {string} fieldId
+   * @returns {Object}
+   */
+  function getCollectionStatus(fieldId) {
+    const field = fields.find(f => f.id === fieldId);
+    if (!field) {
+      return {
+        fieldName: 'Unknown',
+        completedPlots: 0,
+        totalPlots: CONFIG.TOTAL_PLOTS,
+        progressPercent: 0,
+        roundNumber: null,
+        entryWindowStatus: 'no_rounds',
+        daysMessage: 'No rounds created'
+      };
+    }
+
+    // Get latest round for this field
+    const fieldRounds = rounds
+      .filter(r => r.field_id === fieldId)
+      .sort((a, b) => b.round_number - a.round_number);
+    
+    const latestRound = fieldRounds[0] || null;
+    
+    // Calculate completion for this field's current round
+    let completedPlots = 0;
+    if (latestRound) {
+      const roundEntries = entries.filter(e => e.round_id === latestRound.id);
+      completedPlots = new Set(roundEntries.map(e => e.plot_number)).size;
+    }
+    
+    const progressPercent = Math.round((completedPlots / CONFIG.TOTAL_PLOTS) * 100);
+
+    // Calculate entry window status
+    let entryWindowStatus = 'no_rounds';
+    let daysMessage = 'No rounds created';
+    
+    if (latestRound) {
+      const roundDate = new Date(latestRound.recorded_date || latestRound.created_at);
+      const now = new Date();
+      const daysSinceRound = Math.floor((now - roundDate) / (1000 * 60 * 60 * 24));
+      
+      // Assume entry window is 7 days from round creation
+      const entryWindowDays = 7;
+      const daysRemaining = entryWindowDays - daysSinceRound;
+      
+      // Assume next round is typically 14 days after current round
+      const roundIntervalDays = 14;
+      const daysUntilNextRound = roundIntervalDays - daysSinceRound;
+      
+      if (completedPlots === CONFIG.TOTAL_PLOTS) {
+        // Round is complete
+        if (daysUntilNextRound > 0) {
+          entryWindowStatus = 'complete_waiting';
+          daysMessage = `Round complete! Next round in ${daysUntilNextRound} days`;
+        } else {
+          entryWindowStatus = 'ready_for_next';
+          daysMessage = 'Ready for next round';
+        }
+      } else if (daysRemaining > 0) {
+        // Still in entry window
+        entryWindowStatus = 'in_window';
+        daysMessage = `${daysRemaining} days left to complete`;
+      } else if (daysRemaining === 0) {
+        entryWindowStatus = 'last_day';
+        daysMessage = 'Last day to complete!';
+      } else {
+        // Past entry window
+        entryWindowStatus = 'overdue';
+        daysMessage = `Overdue by ${Math.abs(daysRemaining)} days`;
+      }
+    }
+
+    return {
+      fieldName: field.name,
+      completedPlots,
+      totalPlots: CONFIG.TOTAL_PLOTS,
+      progressPercent,
+      roundNumber: latestRound?.round_number || null,
+      entryWindowStatus,
+      daysMessage
+    };
+  }
+
   // Public API
   return {
     init,
@@ -234,7 +345,11 @@ const dashboard = (() => {
     getFieldCards,
     getRecentActivity,
     getTreatmentStats,
-    refresh
+    refresh,
+    setCollectionField,
+    getCollectionFieldId,
+    getFields,
+    getCollectionStatus
   };
 })();
 
