@@ -264,6 +264,68 @@
               </div>
             </div>
           </div>
+
+          <!-- Round Overview Section -->
+          <div class="chart-card" style="margin-top: var(--space-4);">
+            <div class="chart-card-header">
+              <div>
+                <h3 class="chart-card-title">Round Overview</h3>
+                <p class="chart-card-subtitle">Detailed view of plots and entries for a specific round</p>
+              </div>
+            </div>
+            <div class="chart-card-body">
+              <!-- Round Overview Filters -->
+              <div class="round-overview-filters">
+                <div class="filter-group">
+                  <label class="filter-label">Round</label>
+                  <select class="form-select filter-select" id="overviewRoundSelect">
+                    <option value="">Select Round...</option>
+                  </select>
+                </div>
+                <div class="filter-group">
+                  <label class="filter-label">Block</label>
+                  <select class="form-select filter-select" id="overviewBlockSelect">
+                    <option value="all">All Blocks</option>
+                    <option value="1">Block 1</option>
+                    <option value="2">Block 2</option>
+                    <option value="3">Block 3</option>
+                    <option value="4">Block 4</option>
+                    <option value="5">Block 5</option>
+                  </select>
+                </div>
+                <div class="filter-group">
+                  <label class="filter-label">Plot</label>
+                  <select class="form-select filter-select" id="overviewPlotSelect">
+                    <option value="all">All Plots</option>
+                  </select>
+                </div>
+                <div class="filter-group">
+                  <label class="filter-label">Treatment</label>
+                  <select class="form-select filter-select" id="overviewTreatmentSelect">
+                    <option value="all">All Treatments</option>
+                    <option value="I">I - Inoculant</option>
+                    <option value="B">B - Biochar</option>
+                    <option value="O">O - Control</option>
+                    <option value="OI">OI - Control + Inoculant</option>
+                    <option value="BO">BO - Biochar + Control</option>
+                    <option value="BI">BI - Biochar + Inoculant</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Round Summary Stats -->
+              <div class="round-summary" id="roundSummary">
+                <div class="round-summary-empty">
+                  <p>Select a round to view detailed plot information</p>
+                </div>
+              </div>
+
+              <!-- Plot Details Table -->
+              <div class="plot-details-container" id="plotDetailsContainer">
+                <!-- Table will be injected here -->
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
@@ -325,7 +387,15 @@
       logoutBtn: document.getElementById('logoutBtn'),
       exportFullRound: document.getElementById('exportFullRound'),
       exportRaw: document.getElementById('exportRaw'),
-      exportSummary: document.getElementById('exportSummary')
+      exportSummary: document.getElementById('exportSummary'),
+      
+      // Round Overview
+      overviewRoundSelect: document.getElementById('overviewRoundSelect'),
+      overviewBlockSelect: document.getElementById('overviewBlockSelect'),
+      overviewPlotSelect: document.getElementById('overviewPlotSelect'),
+      overviewTreatmentSelect: document.getElementById('overviewTreatmentSelect'),
+      roundSummary: document.getElementById('roundSummary'),
+      plotDetailsContainer: document.getElementById('plotDetailsContainer')
     };
 
     // ============================================
@@ -434,6 +504,130 @@
       charts.createProgressChart('progressChart', progressData);
     }
 
+    function renderOverviewRoundSelect() {
+      const availableRounds = analytics.getAvailableRounds();
+      let options = '<option value="">Select Round...</option>';
+      availableRounds.forEach(r => {
+        options += `<option value="${r.id}">Round ${r.round_number}</option>`;
+      });
+      elements.overviewRoundSelect.innerHTML = options;
+    }
+
+    function updatePlotSelectOptions() {
+      const blockFilter = elements.overviewBlockSelect.value;
+      let options = '<option value="all">All Plots</option>';
+      
+      // Generate plot numbers based on block filter
+      if (blockFilter === 'all') {
+        for (let i = 1; i <= 30; i++) {
+          options += `<option value="${i}">Plot ${i}</option>`;
+        }
+      } else {
+        // Each block has 6 plots
+        const blockNum = parseInt(blockFilter);
+        const startPlot = (blockNum - 1) * 6 + 1;
+        const endPlot = blockNum * 6;
+        for (let i = startPlot; i <= endPlot; i++) {
+          options += `<option value="${i}">Plot ${i}</option>`;
+        }
+      }
+      
+      elements.overviewPlotSelect.innerHTML = options;
+    }
+
+    function renderRoundOverview() {
+      const roundId = elements.overviewRoundSelect.value;
+      
+      if (!roundId) {
+        elements.roundSummary.innerHTML = `
+          <div class="round-summary-empty">
+            <p>Select a round to view detailed plot information</p>
+          </div>
+        `;
+        elements.plotDetailsContainer.innerHTML = '';
+        return;
+      }
+
+      const blockFilter = elements.overviewBlockSelect.value;
+      const plotFilter = elements.overviewPlotSelect.value;
+      const treatmentFilter = elements.overviewTreatmentSelect.value;
+
+      const overviewData = analytics.getRoundOverviewData(roundId, blockFilter, plotFilter, treatmentFilter);
+      const paramLabels = analytics.getParamLabels();
+
+      // Render summary stats
+      elements.roundSummary.innerHTML = `
+        <div class="round-summary-stats">
+          <div class="summary-stat">
+            <span class="summary-stat-value">${overviewData.summary.totalEntries}</span>
+            <span class="summary-stat-label">Entries</span>
+          </div>
+          <div class="summary-stat">
+            <span class="summary-stat-value">${overviewData.summary.completedPlots}/${overviewData.summary.totalPlots}</span>
+            <span class="summary-stat-label">Plots</span>
+          </div>
+          <div class="summary-stat">
+            <span class="summary-stat-value">${overviewData.summary.completionPercent}%</span>
+            <span class="summary-stat-label">Complete</span>
+          </div>
+          <div class="summary-stat">
+            <span class="summary-stat-value">${overviewData.summary.roundNumber}</span>
+            <span class="summary-stat-label">Round</span>
+          </div>
+        </div>
+      `;
+
+      // Render plot details table
+      if (overviewData.entries.length === 0) {
+        elements.plotDetailsContainer.innerHTML = `
+          <div class="no-data-message">
+            <p>No entries found for the selected filters</p>
+          </div>
+        `;
+        return;
+      }
+
+      let tableHtml = `
+        <div class="table-container">
+          <table class="plot-details-table">
+            <thead>
+              <tr>
+                <th>Plot</th>
+                <th>Block</th>
+                <th>Treatment</th>
+                <th>${utils.escapeHtml(paramLabels[0])}</th>
+                <th>${utils.escapeHtml(paramLabels[1])}</th>
+                <th>${utils.escapeHtml(paramLabels[2])}</th>
+                <th>${utils.escapeHtml(paramLabels[3])}</th>
+                <th>${utils.escapeHtml(paramLabels[4])}</th>
+                <th>${utils.escapeHtml(paramLabels[5])}</th>
+                <th>Entered By</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      overviewData.entries.forEach(entry => {
+        tableHtml += `
+          <tr>
+            <td><strong>${entry.plot_number}</strong></td>
+            <td>${entry.block_number}</td>
+            <td><span class="chip ${utils.getTreatmentChipClass(entry.treatment)} chip-sm">${entry.treatment}</span></td>
+            <td class="numeric">${entry.p1 !== null ? utils.formatNumber(entry.p1) : '—'}</td>
+            <td class="numeric">${entry.p2 !== null ? utils.formatNumber(entry.p2) : '—'}</td>
+            <td class="numeric">${entry.p3 !== null ? utils.formatNumber(entry.p3) : '—'}</td>
+            <td class="numeric">${entry.p4 !== null ? utils.formatNumber(entry.p4) : '—'}</td>
+            <td class="numeric">${entry.p5 !== null ? utils.formatNumber(entry.p5) : '—'}</td>
+            <td class="numeric">${entry.p6 !== null ? utils.formatNumber(entry.p6) : '—'}</td>
+            <td class="text-secondary">${utils.escapeHtml(entry.entered_by || '—')}</td>
+          </tr>
+        `;
+      });
+
+      tableHtml += '</tbody></table></div>';
+      elements.plotDetailsContainer.innerHTML = tableHtml;
+    }
+
     // ============================================
     // INITIALIZATION
     // ============================================
@@ -457,6 +651,7 @@
         renderFieldSelect(result.fields);
         renderRoundSelect();
         renderParamLabels();
+        renderOverviewRoundSelect();
         updateCharts();
 
         elements.loadingState.classList.add('hidden');
@@ -473,13 +668,6 @@
     // ============================================
 
     elements.logoutBtn.addEventListener('click', () => auth.logout());
-
-    elements.fieldSelect.addEventListener('change', (e) => {
-      analytics.setField(e.target.value);
-      renderRoundSelect();
-      renderParamLabels();
-      updateCharts();
-    });
 
     elements.roundSelect.addEventListener('change', (e) => {
       analytics.setRoundFilter(e.target.value);
@@ -514,6 +702,39 @@
         exportModule.exportSummary(analytics.getCurrentField()?.id);
         showToast('Export started...', 'success');
       }
+    });
+
+    // Round Overview Filters
+    elements.overviewRoundSelect.addEventListener('change', () => {
+      renderRoundOverview();
+    });
+
+    elements.overviewBlockSelect.addEventListener('change', () => {
+      updatePlotSelectOptions();
+      renderRoundOverview();
+    });
+
+    elements.overviewPlotSelect.addEventListener('change', () => {
+      renderRoundOverview();
+    });
+
+    elements.overviewTreatmentSelect.addEventListener('change', () => {
+      renderRoundOverview();
+    });
+
+    // Update round overview when field changes
+    elements.fieldSelect.addEventListener('change', (e) => {
+      analytics.setField(e.target.value);
+      renderRoundSelect();
+      renderParamLabels();
+      renderOverviewRoundSelect();
+      updateCharts();
+      // Reset round overview
+      elements.overviewRoundSelect.value = '';
+      elements.overviewBlockSelect.value = 'all';
+      elements.overviewPlotSelect.value = 'all';
+      elements.overviewTreatmentSelect.value = 'all';
+      renderRoundOverview();
     });
 
     // Start

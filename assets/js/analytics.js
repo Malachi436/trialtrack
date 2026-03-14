@@ -317,6 +317,74 @@ const analytics = (() => {
   }
 
   /**
+   * Get detailed round overview data with filtering
+   * @param {string} roundId - Round ID
+   * @param {string} blockFilter - 'all' or specific block number
+   * @param {string} plotFilter - 'all' or specific plot number
+   * @param {string} treatmentFilter - 'all' or specific treatment code
+   * @returns {Object} - { summary: {...}, entries: [...] }
+   */
+  function getRoundOverviewData(roundId, blockFilter = 'all', plotFilter = 'all', treatmentFilter = 'all') {
+    const round = rounds.find(r => r.id === roundId);
+    if (!round) {
+      return {
+        summary: { totalEntries: 0, completedPlots: 0, totalPlots: 0, completionPercent: 0, roundNumber: '—' },
+        entries: []
+      };
+    }
+
+    // Get all entries for this round
+    let roundEntries = entries.filter(e => e.round_id === roundId);
+
+    // Apply block filter
+    if (blockFilter !== 'all') {
+      const blockNum = parseInt(blockFilter);
+      roundEntries = roundEntries.filter(e => e.block_number === blockNum);
+    }
+
+    // Apply plot filter
+    if (plotFilter !== 'all') {
+      const plotNum = parseInt(plotFilter);
+      roundEntries = roundEntries.filter(e => e.plot_number === plotNum);
+    }
+
+    // Apply treatment filter
+    if (treatmentFilter !== 'all') {
+      roundEntries = roundEntries.filter(e => e.treatment === treatmentFilter);
+    }
+
+    // Sort entries by plot number
+    roundEntries.sort((a, b) => a.plot_number - b.plot_number);
+
+    // Calculate summary based on filters
+    let totalPlots;
+    if (blockFilter !== 'all' && plotFilter !== 'all') {
+      totalPlots = 1;
+    } else if (blockFilter !== 'all') {
+      totalPlots = 6; // 6 plots per block
+    } else if (plotFilter !== 'all') {
+      totalPlots = 1;
+    } else {
+      totalPlots = CONFIG.TOTAL_PLOTS;
+    }
+
+    // Get unique completed plots from the filtered entries
+    const completedPlots = new Set(roundEntries.map(e => e.plot_number)).size;
+    const completionPercent = totalPlots > 0 ? Math.round((completedPlots / totalPlots) * 100) : 0;
+
+    return {
+      summary: {
+        totalEntries: roundEntries.length,
+        completedPlots,
+        totalPlots,
+        completionPercent,
+        roundNumber: round.round_number
+      },
+      entries: roundEntries
+    };
+  }
+
+  /**
    * Get parameter labels for current field
    */
   function getParamLabels() {
@@ -359,6 +427,7 @@ const analytics = (() => {
     getBlockData,
     getHeatmapData,
     getAvailableRounds,
+    getRoundOverviewData,
     getParamLabels,
     refresh
   };
