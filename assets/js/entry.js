@@ -74,11 +74,21 @@ const entry = (() => {
   }
 
   /**
+   * Check if the current round is fully complete (all 30 param-block combinations)
+   * @returns {boolean}
+   */
+  function isRoundComplete() {
+    // A round is complete when all 30 param-block combinations are done
+    return completedParamBlocks.size === 30;
+  }
+
+  /**
    * Get the current round window status
    * @returns {Object} - Window status
    */
   function getWindowStatus() {
-    return utils.getNextRoundWindow(currentField, currentRound);
+    const isComplete = isRoundComplete();
+    return utils.getNextRoundWindow(currentField, currentRound, isComplete);
   }
 
   /**
@@ -86,7 +96,8 @@ const entry = (() => {
    * @returns {boolean}
    */
   function canEnter() {
-    return utils.canEnterData(currentField, currentRound);
+    const isComplete = isRoundComplete();
+    return utils.canEnterData(currentField, currentRound, isComplete);
   }
 
   /**
@@ -408,6 +419,7 @@ const entry = (() => {
     refreshRoundStatus,
     getWindowStatus,
     canEnter,
+    isRoundComplete,
     getProgress,
     getParameterProgress,
     isParameterComplete,

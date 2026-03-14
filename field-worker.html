@@ -631,7 +631,12 @@
         elements.fieldLocation.textContent = state.field.location || 'No location set';
         
         const windowStatus = entry.getWindowStatus();
-        elements.roundNumber.textContent = `Round ${windowStatus.roundNumber}`;
+        // Show "Continuing Round X" if resuming incomplete round
+        if (windowStatus.isContinuing) {
+          elements.roundNumber.textContent = `Round ${windowStatus.roundNumber} (In Progress)`;
+        } else {
+          elements.roundNumber.textContent = `Round ${windowStatus.roundNumber}`;
+        }
       }
     }
 

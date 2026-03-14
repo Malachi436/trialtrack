@@ -122,9 +122,10 @@ const utils = {
    * Calculate the next round window based on last round date and field settings
    * @param {Object} field - Field object with interval and window settings
    * @param {Object|null} latestRound - Latest round object or null
+   * @param {boolean} isCurrentRoundComplete - Whether the current round is fully complete
    * @returns {Object} - Window info with earliest, latest, isOpen, daysUntil
    */
-  getNextRoundWindow(field, latestRound) {
+  getNextRoundWindow(field, latestRound, isCurrentRoundComplete = false) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -140,10 +141,26 @@ const utils = {
         latest: null, // No end date for first round
         isOpen: canStart,
         daysUntil: canStart ? 0 : Math.ceil((plantingDate - today) / (1000 * 60 * 60 * 24)),
-        isPast: false
+        isPast: false,
+        isContinuing: false
       };
     }
     
+    // CRITICAL FIX: If the current round is NOT complete, allow continuing it
+    // This prevents locking users out when they refresh or reconnect
+    if (!isCurrentRoundComplete) {
+      return {
+        roundNumber: latestRound.round_number,
+        earliest: new Date(latestRound.recorded_date),
+        latest: null, // No end date when continuing incomplete round
+        isOpen: true, // Always allow continuing incomplete round
+        daysUntil: 0,
+        isPast: false,
+        isContinuing: true // Flag to indicate we're continuing, not starting new
+      };
+    }
+    
+    // Current round is complete - calculate window for NEXT round
     const lastDate = new Date(latestRound.recorded_date);
     lastDate.setHours(0, 0, 0, 0);
     
@@ -167,7 +184,8 @@ const utils = {
       latest,
       isOpen,
       daysUntil,
-      isPast
+      isPast,
+      isContinuing: false
     };
   },
 
@@ -175,10 +193,11 @@ const utils = {
    * Check if data entry is allowed for a field
    * @param {Object} field - Field object
    * @param {Object|null} latestRound - Latest round object
+   * @param {boolean} isCurrentRoundComplete - Whether the current round is complete
    * @returns {boolean} - True if entry is allowed
    */
-  canEnterData(field, latestRound) {
-    const window = this.getNextRoundWindow(field, latestRound);
+  canEnterData(field, latestRound, isCurrentRoundComplete = false) {
+    const window = this.getNextRoundWindow(field, latestRound, isCurrentRoundComplete);
     return window.isOpen;
   },
 
