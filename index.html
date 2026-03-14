@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrialTrack | Login</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg">
+  
+  <style>
+    /* Login page specific styles */
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4);
+      background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-alt) 100%);
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .login-header {
+      text-align: center;
+      padding: var(--space-8) var(--space-6) var(--space-6);
+      background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-surface) 100%);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .login-logo {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto var(--space-4);
+    }
+
+    .login-title {
+      font-family: var(--font-display);
+      font-size: var(--text-3xl);
+      color: var(--color-text-primary);
+      margin: 0;
+    }
+
+    .login-subtitle {
+      font-size: var(--text-sm);
+      color: var(--color-text-secondary);
+      margin-top: var(--space-2);
+    }
+
+    .login-body {
+      padding: var(--space-6);
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .login-error {
+      display: none;
+      padding: var(--space-3);
+      background: var(--color-danger-light);
+      border: 1px solid #FECACA;
+      border-radius: var(--radius-md);
+      color: #991B1B;
+      font-size: var(--text-sm);
+      text-align: center;
+    }
+
+    .login-error.visible {
+      display: block;
+    }
+
+    .login-lockout {
+      display: none;
+      padding: var(--space-4);
+      background: var(--color-warning-light);
+      border: 1px solid #FDE68A;
+      border-radius: var(--radius-md);
+      color: #92400E;
+      font-size: var(--text-sm);
+      text-align: center;
+    }
+
+    .login-lockout.visible {
+      display: block;
+    }
+
+    .login-lockout-timer {
+      font-weight: var(--font-semibold);
+      font-family: var(--font-mono);
+    }
+
+    .login-footer {
+      padding: var(--space-4) var(--space-6);
+      background: var(--color-surface-alt);
+      border-top: 1px solid var(--color-border);
+      text-align: center;
+    }
+
+    .login-footer-text {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+    }
+
+    /* Input with icon */
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: var(--space-3);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-muted);
+      pointer-events: none;
+    }
+
+    .input-wrapper .form-input {
+      padding-left: 44px;
+    }
+
+    /* Password toggle */
+    .password-toggle {
+      position: absolute;
+      right: var(--space-2);
+      top: 50%;
+      transform: translateY(-50%);
+      padding: var(--space-2);
+      color: var(--color-text-muted);
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    .password-toggle:hover {
+      color: var(--color-text-secondary);
+    }
+
+    /* Loading state */
+    .btn-loading .btn-text {
+      visibility: hidden;
+    }
+
+    .btn-loading .btn-spinner {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .login-card {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        max-width: none;
+      }
+
+      .login-container {
+        padding: 0;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <img src="assets/img/logo.svg" alt="TrialTrack Logo" class="login-logo">
+        <h1 class="login-title">TrialTrack</h1>
+        <p class="login-subtitle">Agricultural Field Trial Management</p>
+      </div>
+
+      <div class="login-body">
+        <!-- Lockout Warning -->
+        <div id="lockoutWarning" class="login-lockout">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Too many failed attempts. Please try again in <span id="lockoutTimer" class="login-lockout-timer">15:00</span>
+        </div>
+
+        <!-- Error Message -->
+        <div id="loginError" class="login-error"></div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="login-form">
+          <div class="form-group">
+            <label for="username" class="form-label">Username</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input 
+                type="text" 
+                id="username" 
+                name="username" 
+                class="form-input" 
+                placeholder="Enter your username"
+                autocomplete="username"
+                autocapitalize="off"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                class="form-input" 
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+              >
+              <button type="button" id="passwordToggle" class="password-toggle" aria-label="Toggle password visibility">
+                <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg id="eyeOffIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                  <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                  <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                  <line x1="2" x2="22" y1="2" y2="22"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" id="loginButton" class="btn btn-primary btn-lg btn-block" style="position: relative;">
+            <span class="btn-text">Sign In</span>
+            <span class="btn-spinner spinner spinner-white" style="display: none;"></span>
+          </button>
+        </form>
+      </div>
+
+      <div class="login-footer">
+        <p class="login-footer-text">TrialTrack v1.0 — Agricultural Research Platform</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/auth.js"></script>
+  
+  <script>
+    // DOM Elements
+    const loginForm = document.getElementById('loginForm');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const loginButton = document.getElementById('loginButton');
+    const loginError = document.getElementById('loginError');
+    const lockoutWarning = document.getElementById('lockoutWarning');
+    const lockoutTimer = document.getElementById('lockoutTimer');
+    const passwordToggle = document.getElementById('passwordToggle');
+    const eyeIcon = document.getElementById('eyeIcon');
+    const eyeOffIcon = document.getElementById('eyeOffIcon');
+    const btnText = loginButton.querySelector('.btn-text');
+    const btnSpinner = loginButton.querySelector('.btn-spinner');
+
+    let lockoutInterval = null;
+
+    // Check if already logged in
+    (function checkExistingSession() {
+      const session = auth.getSession();
+      if (session) {
+        window.location.href = auth.getRedirectUrl(session);
+      }
+    })();
+
+    // Check initial lockout state
+    function checkLockout() {
+      const lockout = auth.isLockedOut();
+      if (lockout.locked) {
+        showLockout(lockout.remainingMs);
+        return true;
+      } else {
+        hideLockout();
+        return false;
+      }
+    }
+
+    // Show lockout warning with timer
+    function showLockout(remainingMs) {
+      lockoutWarning.classList.add('visible');
+      loginButton.disabled = true;
+      updateLockoutTimer(remainingMs);
+      
+      // Clear existing interval
+      if (lockoutInterval) clearInterval(lockoutInterval);
+      
+      // Start countdown
+      let remaining = remainingMs;
+      lockoutInterval = setInterval(() => {
+        remaining -= 1000;
+        if (remaining <= 0) {
+          clearInterval(lockoutInterval);
+          hideLockout();
+          auth.resetLoginAttempts();
+        } else {
+          updateLockoutTimer(remaining);
+        }
+      }, 1000);
+    }
+
+    // Update lockout timer display
+    function updateLockoutTimer(ms) {
+      const minutes = Math.floor(ms / 60000);
+      const seconds = Math.floor((ms % 60000) / 1000);
+      lockoutTimer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // Hide lockout warning
+    function hideLockout() {
+      lockoutWarning.classList.remove('visible');
+      loginButton.disabled = false;
+      if (lockoutInterval) {
+        clearInterval(lockoutInterval);
+        lockoutInterval = null;
+      }
+    }
+
+    // Show error message
+    function showError(message) {
+      loginError.textContent = message;
+      loginError.classList.add('visible');
+    }
+
+    // Hide error message
+    function hideError() {
+      loginError.classList.remove('visible');
+    }
+
+    // Set loading state
+    function setLoading(loading) {
+      if (loading) {
+        loginButton.classList.add('btn-loading');
+        loginButton.disabled = true;
+        btnText.style.visibility = 'hidden';
+        btnSpinner.style.display = 'block';
+      } else {
+        loginButton.classList.remove('btn-loading');
+        loginButton.disabled = checkLockout();
+        btnText.style.visibility = 'visible';
+        btnSpinner.style.display = 'none';
+      }
+    }
+
+    // Password visibility toggle
+    passwordToggle.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      eyeIcon.style.display = isPassword ? 'none' : 'block';
+      eyeOffIcon.style.display = isPassword ? 'block' : 'none';
+    });
+
+    // Form submission
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Check lockout first
+      if (checkLockout()) return;
+      
+      hideError();
+      setLoading(true);
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+
+      try {
+        const result = await auth.login(username, password);
+        
+        if (result.success) {
+          // Redirect based on role
+          const session = auth.getSession();
+          window.location.href = auth.getRedirectUrl(session);
+        } else {
+          showError(result.error);
+          
+          // Check if we just got locked out
+          checkLockout();
+          
+          // Clear password field on error
+          passwordInput.value = '';
+          passwordInput.focus();
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        showError('An unexpected error occurred. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // Initial lockout check
+    checkLockout();
+
+    // Focus username input on load
+    usernameInput.focus();
+  </script>
+</body>
+</html>

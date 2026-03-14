@@ -1,0 +1,316 @@
+/*
+ * TrialTrack — Charts CSS
+ * Chart container styles and responsive layouts
+ */
+
+/* ============================================
+   CHART GRID LAYOUT
+   ============================================ */
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.charts-grid-2col {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.charts-grid-1col {
+  grid-template-columns: 1fr;
+}
+
+/* ============================================
+   CHART CARD
+   ============================================ */
+
+.chart-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.chart-card-title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.chart-card-subtitle {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+.chart-card-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.chart-card-body {
+  padding: var(--space-4);
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-card-body.tall {
+  min-height: 400px;
+}
+
+.chart-card-body.short {
+  min-height: 200px;
+}
+
+/* ============================================
+   CHART CONTAINER
+   ============================================ */
+
+.chart-container {
+  width: 100%;
+  height: 300px;
+  position: relative;
+}
+
+.chart-container.tall {
+  height: 400px;
+}
+
+.chart-container.short {
+  height: 200px;
+}
+
+/* ============================================
+   DONUT CHART CENTER
+   ============================================ */
+
+.donut-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.donut-center-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+}
+
+.donut-center-label {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* ============================================
+   HEATMAP TABLE
+   ============================================ */
+
+.heatmap-container {
+  overflow-x: auto;
+}
+
+.heatmap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+}
+
+.heatmap-table th,
+.heatmap-table td {
+  padding: var(--space-2);
+  text-align: center;
+  border: 1px solid var(--color-border);
+  min-width: 50px;
+}
+
+.heatmap-table th {
+  background-color: var(--color-surface-alt);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+}
+
+.heatmap-table td {
+  font-family: var(--font-mono);
+}
+
+.heatmap-cell {
+  transition: background-color var(--transition-fast);
+}
+
+.heatmap-cell:hover {
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.heatmap-legend-scale {
+  display: flex;
+  gap: 2px;
+}
+
+.heatmap-legend-cell {
+  width: 20px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+/* ============================================
+   CHART CONTROLS
+   ============================================ */
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-6);
+}
+
+.chart-control-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.chart-control-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+}
+
+.chart-control-select {
+  height: 36px;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  min-width: 150px;
+}
+
+.chart-control-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+/* ============================================
+   EXPORT SECTION
+   ============================================ */
+
+.export-section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-6);
+}
+
+.export-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+}
+
+.export-buttons {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ============================================
+   CHART LOADING STATE
+   ============================================ */
+
+.chart-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 300px;
+  color: var(--color-text-muted);
+}
+
+.chart-empty {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--color-text-muted);
+}
+
+.chart-empty-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--space-3);
+  opacity: 0.5;
+}
+
+.chart-empty-text {
+  font-size: var(--text-sm);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 1279px) {
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .charts-grid,
+  .charts-grid-2col {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .export-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .export-buttons {
+    flex-direction: column;
+  }
+
+  .chart-container {
+    height: 250px;
+  }
+}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- TrialTrack Logo - Green Leaf Mark -->
+  <path d="M24 4C24 4 8 12 8 28C8 36.8366 15.1634 44 24 44C32.8366 44 40 36.8366 40 28C40 12 24 4 24 4Z" fill="#DCFCE7" stroke="#16A34A" stroke-width="2"/>
+  <path d="M24 12C24 12 16 18 16 28C16 32.4183 19.5817 36 24 36C28.4183 36 32 32.4183 32 28C32 18 24 12 24 12Z" fill="#16A34A"/>
+  <path d="M24 16V32" stroke="#DCFCE7" stroke-width="2" stroke-linecap="round"/>
+  <path d="M20 24L24 20L28 24" stroke="#DCFCE7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

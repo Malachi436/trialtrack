@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrialTrack | Admin</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="assets/img/logo.svg" alt="TrialTrack" class="sidebar-logo">
+        <span class="sidebar-brand">TrialTrack</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Main</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="7" height="9" x="3" y="3" rx="1"/>
+              <rect width="7" height="5" x="14" y="3" rx="1"/>
+              <rect width="7" height="9" x="14" y="12" rx="1"/>
+              <rect width="7" height="5" x="3" y="16" rx="1"/>
+            </svg>
+            <span class="nav-item-label">Dashboard</span>
+          </a>
+          <a href="analytics.html" class="nav-item">
+            <svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/>
+              <path d="m19 9-5 5-4-4-3 3"/>
+            </svg>
+            <span class="nav-item-label">Analytics</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Management</div>
+          <a href="admin.html" class="nav-item active" id="navUsers">
+            <svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span class="nav-item-label">Users</span>
+          </a>
+          <a href="admin.html#fields" class="nav-item" id="navFields">
+            <svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span class="nav-item-label">Fields</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="nav-item" id="logoutBtn" style="cursor: pointer;">
+          <svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" x2="9" y1="12" y2="12"/>
+          </svg>
+          <span class="nav-item-label">Sign Out</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 class="topbar-title" id="pageTitle">Admin Panel</h1>
+        </div>
+        <div class="topbar-right">
+          <div class="user-menu">
+            <div class="user-menu-info">
+              <div class="user-menu-name" id="userName">—</div>
+              <div class="user-menu-role" id="userRole">—</div>
+            </div>
+            <div class="avatar" id="userAvatar">?</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <div class="page-content">
+        <!-- Loading State -->
+        <div id="loadingState">
+          <div class="flex items-center justify-center gap-3 p-12">
+            <span class="spinner"></span>
+            <span class="text-secondary">Loading...</span>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div id="adminContent" class="hidden">
+          <!-- Tab Navigation -->
+          <div class="flex gap-2 mb-6">
+            <button class="btn btn-primary" id="tabUsers">Users</button>
+            <button class="btn btn-secondary" id="tabFields">Fields</button>
+          </div>
+
+          <!-- Users Panel -->
+          <div id="usersPanel">
+            <div class="section-header">
+              <h2 class="section-title">Users</h2>
+              <button class="btn btn-primary" id="addUserBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <line x1="19" x2="19" y1="8" y2="14"/>
+                  <line x1="22" x2="16" y1="11" y2="11"/>
+                </svg>
+                Add User
+              </button>
+            </div>
+
+            <!-- Role Permissions Reference -->
+            <div class="card card-sm mb-4">
+              <h4 class="text-sm font-semibold text-secondary mb-2">Role Permissions</h4>
+              <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: var(--space-2);">
+                <div class="text-xs"><strong>Superadmin:</strong> Everything</div>
+                <div class="text-xs"><strong>Admin:</strong> Manage one field</div>
+                <div class="text-xs"><strong>Viewer:</strong> View analytics</div>
+                <div class="text-xs"><strong>User:</strong> Data entry only</div>
+              </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="table-container">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Assigned Field</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Fields Panel -->
+          <div id="fieldsPanel" class="hidden">
+            <div class="section-header">
+              <h2 class="section-title">Fields</h2>
+              <button class="btn btn-primary" id="addFieldBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                  <line x1="12" x2="12" y1="8" y2="14"/>
+                  <line x1="15" x2="9" y1="11" y2="11"/>
+                </svg>
+                Add Field
+              </button>
+            </div>
+
+            <!-- Fields Table -->
+            <div class="table-container">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Location</th>
+                    <th>Planting Date</th>
+                    <th>Rounds</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="fieldsTableBody"></tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="noFieldsState" class="dashboard-empty hidden">
+              <svg class="dashboard-empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              <h3 class="dashboard-empty-title">No Fields Yet</h3>
+              <p class="dashboard-empty-description">Create your first field to start tracking biochar soil treatment trials.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- User Modal -->
+  <div class="modal-backdrop" id="userModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="userModalTitle">Add User</h3>
+        <button class="modal-close" id="closeUserModal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+          </svg>
+        </button>
+      </div>
+      <form id="userForm">
+        <div class="modal-body">
+          <input type="hidden" id="userId">
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">Username</label>
+            <input type="text" class="form-input" id="userUsername" required minlength="3">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" id="passwordLabel">Password</label>
+            <input type="password" class="form-input" id="userPassword" minlength="6">
+            <div class="form-help" id="passwordHelp">Minimum 6 characters</div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">Role</label>
+            <select class="form-select" id="userRoleSelect" required>
+              <option value="user">User (Field Worker)</option>
+              <option value="viewer">Viewer</option>
+              <option value="admin">Admin</option>
+              <option value="superadmin">Superadmin</option>
+            </select>
+          </div>
+          
+          <div class="form-group" id="fieldAssignmentGroup">
+            <label class="form-label">Assigned Field</label>
+            <select class="form-select" id="userField">
+              <option value="">All Fields</option>
+            </select>
+            <div class="form-help">Required for User and Viewer roles</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelUserModal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveUserBtn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Field Modal -->
+  <div class="modal-backdrop" id="fieldModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="fieldModalTitle">Add Field</h3>
+        <button class="modal-close" id="closeFieldModal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+          </svg>
+        </button>
+      </div>
+      <form id="fieldForm">
+        <div class="modal-body">
+          <input type="hidden" id="fieldId">
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">Field Name</label>
+            <input type="text" class="form-input" id="fieldName" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Location</label>
+            <input type="text" class="form-input" id="fieldLocation" placeholder="e.g., Kumasi, Ghana">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">Planting Date</label>
+            <input type="date" class="form-input" id="fieldPlantingDate" required>
+          </div>
+          
+          <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: var(--space-4);">
+            <div class="form-group">
+              <label class="form-label">Measurement Interval (days)</label>
+              <input type="number" class="form-input" id="fieldInterval" value="14" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tolerance Window (days)</label>
+              <input type="number" class="form-input" id="fieldWindow" value="3" min="1">
+            </div>
+          </div>
+          
+          <h4 class="text-sm font-semibold text-secondary mt-4 mb-2">Parameter Names</h4>
+          <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: var(--space-3);">
+            <div class="form-group">
+              <input type="text" class="form-input" id="fieldParam1" placeholder="Parameter 1">
+            </div>
+            <div class="form-group">
+              <input type="text" class="form-input" id="fieldParam2" placeholder="Parameter 2">
+            </div>
+            <div class="form-group">
+              <input type="text" class="form-input" id="fieldParam3" placeholder="Parameter 3">
+            </div>
+            <div class="form-group">
+              <input type="text" class="form-input" id="fieldParam4" placeholder="Parameter 4">
+            </div>
+            <div class="form-group">
+              <input type="text" class="form-input" id="fieldParam5" placeholder="Parameter 5">
+            </div>
+            <div class="form-group">
+              <input type="text" class="form-input" id="fieldParam6" placeholder="Parameter 6">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelFieldModal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveFieldBtn">Save Field</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-backdrop" id="deleteModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirm Delete</h3>
+        <button class="modal-close" id="closeDeleteModal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="deleteMessage">Are you sure you want to delete this item?</p>
+        <div id="forceDeleteWarning" class="alert alert-warning mt-3" style="display: none;">
+          <strong>Warning:</strong> <span id="forceDeleteInfo"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelDelete">Cancel</button>
+        <button class="btn btn-danger" id="confirmDelete">Delete</button>
+        <button class="btn btn-danger" id="forceDeleteBtn" style="display: none;">Force Delete All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/admin.js"></script>
+  
+  <script>
+    // Auth check - superadmin only
+    const session = auth.requireRole([CONFIG.ROLES.SUPERADMIN]);
+    if (!session) {
+      // Will redirect
+    }
+
+    // DOM Elements
+    const elements = {
+      loadingState: document.getElementById('loadingState'),
+      adminContent: document.getElementById('adminContent'),
+      pageTitle: document.getElementById('pageTitle'),
+      userName: document.getElementById('userName'),
+      userRole: document.getElementById('userRole'),
+      userAvatar: document.getElementById('userAvatar'),
+      
+      // Tabs
+      tabUsers: document.getElementById('tabUsers'),
+      tabFields: document.getElementById('tabFields'),
+      navUsers: document.getElementById('navUsers'),
+      navFields: document.getElementById('navFields'),
+      usersPanel: document.getElementById('usersPanel'),
+      fieldsPanel: document.getElementById('fieldsPanel'),
+      
+      // Users
+      usersTableBody: document.getElementById('usersTableBody'),
+      addUserBtn: document.getElementById('addUserBtn'),
+      
+      // Fields
+      fieldsTableBody: document.getElementById('fieldsTableBody'),
+      noFieldsState: document.getElementById('noFieldsState'),
+      addFieldBtn: document.getElementById('addFieldBtn'),
+      
+      // User Modal
+      userModal: document.getElementById('userModal'),
+      userModalTitle: document.getElementById('userModalTitle'),
+      userForm: document.getElementById('userForm'),
+      userId: document.getElementById('userId'),
+      userUsername: document.getElementById('userUsername'),
+      userPassword: document.getElementById('userPassword'),
+      passwordLabel: document.getElementById('passwordLabel'),
+      passwordHelp: document.getElementById('passwordHelp'),
+      userRoleSelect: document.getElementById('userRoleSelect'),
+      userField: document.getElementById('userField'),
+      fieldAssignmentGroup: document.getElementById('fieldAssignmentGroup'),
+      closeUserModal: document.getElementById('closeUserModal'),
+      cancelUserModal: document.getElementById('cancelUserModal'),
+      
+      // Field Modal
+      fieldModal: document.getElementById('fieldModal'),
+      fieldModalTitle: document.getElementById('fieldModalTitle'),
+      fieldForm: document.getElementById('fieldForm'),
+      fieldId: document.getElementById('fieldId'),
+      fieldName: document.getElementById('fieldName'),
+      fieldLocation: document.getElementById('fieldLocation'),
+      fieldPlantingDate: document.getElementById('fieldPlantingDate'),
+      fieldInterval: document.getElementById('fieldInterval'),
+      fieldWindow: document.getElementById('fieldWindow'),
+      fieldParam1: document.getElementById('fieldParam1'),
+      fieldParam2: document.getElementById('fieldParam2'),
+      fieldParam3: document.getElementById('fieldParam3'),
+      fieldParam4: document.getElementById('fieldParam4'),
+      fieldParam5: document.getElementById('fieldParam5'),
+      fieldParam6: document.getElementById('fieldParam6'),
+      closeFieldModal: document.getElementById('closeFieldModal'),
+      cancelFieldModal: document.getElementById('cancelFieldModal'),
+      
+      // Delete Modal
+      deleteModal: document.getElementById('deleteModal'),
+      deleteMessage: document.getElementById('deleteMessage'),
+      closeDeleteModal: document.getElementById('closeDeleteModal'),
+      cancelDelete: document.getElementById('cancelDelete'),
+      confirmDelete: document.getElementById('confirmDelete'),
+      
+      logoutBtn: document.getElementById('logoutBtn')
+    };
+
+    let deleteCallback = null;
+    let currentTab = 'users';
+
+    // Toast
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      const icons = {
+        success: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',
+        error: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>'
+      };
+      toast.innerHTML = `
+        <svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icons[type] || ''}</svg>
+        <div class="toast-content"><div class="toast-message">${utils.escapeHtml(message)}</div></div>
+      `;
+      document.getElementById('toastContainer').appendChild(toast);
+      setTimeout(() => { toast.classList.add('toast-exit'); setTimeout(() => toast.remove(), 200); }, 4000);
+    }
+
+    // Modal helpers
+    function openModal(modal) { modal.classList.add('active'); }
+    function closeModal(modal) { modal.classList.remove('active'); }
+
+    // Tab switching
+    function switchTab(tab) {
+      currentTab = tab;
+      elements.tabUsers.className = tab === 'users' ? 'btn btn-primary' : 'btn btn-secondary';
+      elements.tabFields.className = tab === 'fields' ? 'btn btn-primary' : 'btn btn-secondary';
+      elements.navUsers.classList.toggle('active', tab === 'users');
+      elements.navFields.classList.toggle('active', tab === 'fields');
+      elements.usersPanel.classList.toggle('hidden', tab !== 'users');
+      elements.fieldsPanel.classList.toggle('hidden', tab !== 'fields');
+      elements.pageTitle.textContent = tab === 'users' ? 'User Management' : 'Field Management';
+      window.location.hash = tab;
+    }
+
+    // Render users table
+    function renderUsers() {
+      const users = admin.getUsers();
+      const fields = admin.getFields();
+      
+      elements.usersTableBody.innerHTML = users.map(user => {
+        const field = fields.find(f => f.id === user.field_id);
+        const roleChipClass = {
+          superadmin: 'chip-danger',
+          admin: 'chip-warning',
+          viewer: 'chip-primary',
+          user: 'chip-default'
+        }[user.role] || 'chip-default';
+        
+        return `
+          <tr>
+            <td><strong>${utils.escapeHtml(user.username)}</strong></td>
+            <td><span class="chip ${roleChipClass}">${user.role}</span></td>
+            <td>${field ? utils.escapeHtml(field.name) : '<span class="text-muted">All fields</span>'}</td>
+            <td class="text-muted">${utils.formatDate(user.created_at)}</td>
+            <td>
+              <button class="btn btn-ghost btn-sm" onclick="editUser('${user.id}')">Edit</button>
+              <button class="btn btn-ghost btn-sm text-danger" onclick="confirmDeleteUser('${user.id}', '${utils.escapeHtml(user.username)}')">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Render fields table
+    function renderFields() {
+      const fields = admin.getFields();
+      
+      if (fields.length === 0) {
+        elements.noFieldsState.classList.remove('hidden');
+        elements.fieldsTableBody.innerHTML = '';
+        return;
+      }
+      
+      elements.noFieldsState.classList.add('hidden');
+      
+      elements.fieldsTableBody.innerHTML = fields.map(field => `
+        <tr>
+          <td><strong>${utils.escapeHtml(field.name)}</strong></td>
+          <td class="text-muted">${utils.escapeHtml(field.location || '—')}</td>
+          <td>${utils.formatDate(field.planting_date)}</td>
+          <td>—</td>
+          <td>
+            <a href="analytics.html?field=${field.id}" class="btn btn-ghost btn-sm">Analytics</a>
+            <button class="btn btn-ghost btn-sm" onclick="editField('${field.id}')">Edit</button>
+            <button class="btn btn-ghost btn-sm text-danger" onclick="confirmDeleteField('${field.id}', '${utils.escapeHtml(field.name)}')">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Populate field dropdown
+    function populateFieldDropdown() {
+      const fields = admin.getFields();
+      elements.userField.innerHTML = '<option value="">All Fields</option>' +
+        fields.map(f => `<option value="${f.id}">${utils.escapeHtml(f.name)}</option>`).join('');
+    }
+
+    // User CRUD
+    function openAddUserModal() {
+      elements.userModalTitle.textContent = 'Add User';
+      elements.userForm.reset();
+      elements.userId.value = '';
+      elements.userPassword.required = true;
+      elements.passwordLabel.classList.add('form-label-required');
+      elements.passwordHelp.textContent = 'Minimum 6 characters';
+      populateFieldDropdown();
+      openModal(elements.userModal);
+    }
+
+    window.editUser = async function(userId) {
+      const users = admin.getUsers();
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+      
+      elements.userModalTitle.textContent = 'Edit User';
+      elements.userId.value = user.id;
+      elements.userUsername.value = user.username;
+      elements.userPassword.value = '';
+      elements.userPassword.required = false;
+      elements.passwordLabel.classList.remove('form-label-required');
+      elements.passwordHelp.textContent = 'Leave blank to keep current password';
+      elements.userRoleSelect.value = user.role;
+      populateFieldDropdown();
+      elements.userField.value = user.field_id || '';
+      
+      openModal(elements.userModal);
+    };
+
+    async function saveUser(e) {
+      e.preventDefault();
+      
+      const userId = elements.userId.value;
+      const userData = {
+        username: elements.userUsername.value.trim(),
+        password: elements.userPassword.value,
+        role: elements.userRoleSelect.value,
+        field_id: elements.userField.value || null
+      };
+      
+      let result;
+      if (userId) {
+        result = await admin.updateUser(userId, userData);
+      } else {
+        result = await admin.createUser(userData);
+      }
+      
+      if (result.error) {
+        showToast(result.error, 'error');
+        return;
+      }
+      
+      closeModal(elements.userModal);
+      renderUsers();
+      showToast(userId ? 'User updated successfully' : 'User created successfully', 'success');
+    }
+
+    window.confirmDeleteUser = function(userId, username) {
+      elements.deleteMessage.textContent = `Are you sure you want to delete user "${username}"?`;
+      deleteCallback = async () => {
+        const result = await admin.deleteUser(userId, session.id);
+        if (result.error) {
+          showToast(result.error, 'error');
+          return true; // Close modal on error
+        }
+        renderUsers();
+        showToast('User deleted successfully', 'success');
+        return true; // Close modal on success
+      };
+      openModal(elements.deleteModal);
+    };
+
+    // Field CRUD
+    function openAddFieldModal() {
+      elements.fieldModalTitle.textContent = 'Add Field';
+      elements.fieldForm.reset();
+      elements.fieldId.value = '';
+      elements.fieldInterval.value = 14;
+      elements.fieldWindow.value = 3;
+      openModal(elements.fieldModal);
+    }
+
+    window.editField = async function(fieldId) {
+      const fields = admin.getFields();
+      const field = fields.find(f => f.id === fieldId);
+      if (!field) return;
+      
+      elements.fieldModalTitle.textContent = 'Edit Field';
+      elements.fieldId.value = field.id;
+      elements.fieldName.value = field.name;
+      elements.fieldLocation.value = field.location || '';
+      elements.fieldPlantingDate.value = utils.formatDateISO(field.planting_date);
+      elements.fieldInterval.value = field.measurement_interval_days || 14;
+      elements.fieldWindow.value = field.window_days || 3;
+      elements.fieldParam1.value = field.param1 || '';
+      elements.fieldParam2.value = field.param2 || '';
+      elements.fieldParam3.value = field.param3 || '';
+      elements.fieldParam4.value = field.param4 || '';
+      elements.fieldParam5.value = field.param5 || '';
+      elements.fieldParam6.value = field.param6 || '';
+      
+      openModal(elements.fieldModal);
+    };
+
+    async function saveField(e) {
+      e.preventDefault();
+      
+      const fieldId = elements.fieldId.value;
+      const fieldData = {
+        name: elements.fieldName.value.trim(),
+        location: elements.fieldLocation.value.trim(),
+        planting_date: elements.fieldPlantingDate.value,
+        measurement_interval_days: parseInt(elements.fieldInterval.value) || 14,
+        window_days: parseInt(elements.fieldWindow.value) || 3,
+        param1: elements.fieldParam1.value.trim() || 'Parameter 1',
+        param2: elements.fieldParam2.value.trim() || 'Parameter 2',
+        param3: elements.fieldParam3.value.trim() || 'Parameter 3',
+        param4: elements.fieldParam4.value.trim() || 'Parameter 4',
+        param5: elements.fieldParam5.value.trim() || 'Parameter 5',
+        param6: elements.fieldParam6.value.trim() || 'Parameter 6'
+      };
+      
+      let result;
+      if (fieldId) {
+        result = await admin.updateField(fieldId, fieldData);
+      } else {
+        result = await admin.createField(fieldData);
+      }
+      
+      if (result.error) {
+        showToast(result.error, 'error');
+        return;
+      }
+      
+      closeModal(elements.fieldModal);
+      renderFields();
+      populateFieldDropdown();
+      showToast(fieldId ? 'Field updated successfully' : 'Field created successfully', 'success');
+    }
+
+    // Store field info for force delete
+    let pendingForceDeleteFieldId = null;
+
+    window.confirmDeleteField = async function(fieldId, name) {
+      // Reset force delete UI
+      pendingForceDeleteFieldId = null;
+      document.getElementById('forceDeleteWarning').style.display = 'none';
+      document.getElementById('forceDeleteBtn').style.display = 'none';
+      document.getElementById('confirmDelete').style.display = '';
+      
+      elements.deleteMessage.textContent = `Are you sure you want to delete field "${name}"? This will also delete all associated blocks and plots.`;
+      
+      deleteCallback = async () => {
+        const result = await admin.deleteField(fieldId);
+        
+        if (result.error === 'HAS_ENTRIES') {
+          // Show force delete option - return false to keep modal open
+          pendingForceDeleteFieldId = fieldId;
+          document.getElementById('forceDeleteWarning').style.display = 'block';
+          document.getElementById('forceDeleteInfo').textContent = result.message;
+          document.getElementById('forceDeleteBtn').style.display = '';
+          document.getElementById('confirmDelete').style.display = 'none';
+          elements.deleteMessage.textContent = `Field "${name}" has existing data entries.`;
+          return false; // Keep modal open
+        }
+        
+        if (result.error) {
+          showToast(result.error, 'error');
+          return true; // Close modal on error
+        }
+        renderFields();
+        populateFieldDropdown();
+        showToast('Field deleted successfully', 'success');
+        return true; // Close modal on success
+      };
+      openModal(elements.deleteModal);
+    };
+
+    // Force delete handler
+    document.getElementById('forceDeleteBtn').addEventListener('click', async () => {
+      if (!pendingForceDeleteFieldId) return;
+      
+      const btn = document.getElementById('forceDeleteBtn');
+      btn.disabled = true;
+      btn.textContent = 'Deleting...';
+      
+      const result = await admin.deleteField(pendingForceDeleteFieldId, true);
+      
+      btn.disabled = false;
+      btn.textContent = 'Force Delete All';
+      
+      if (result.error) {
+        showToast(result.error, 'error');
+        return;
+      }
+      
+      pendingForceDeleteFieldId = null;
+      closeModal(elements.deleteModal);
+      renderFields();
+      populateFieldDropdown();
+      showToast('Field and all data deleted successfully', 'success');
+    });
+
+    // Initialize
+    async function initialize() {
+      elements.userName.textContent = session.username;
+      elements.userRole.textContent = session.role;
+      elements.userAvatar.textContent = utils.getInitials(session.username);
+      
+      await admin.init();
+      
+      // Check hash for tab
+      const hash = window.location.hash.slice(1);
+      switchTab(hash === 'fields' ? 'fields' : 'users');
+      
+      renderUsers();
+      renderFields();
+      
+      elements.loadingState.classList.add('hidden');
+      elements.adminContent.classList.remove('hidden');
+    }
+
+    // Event Listeners
+    elements.tabUsers.addEventListener('click', () => switchTab('users'));
+    elements.tabFields.addEventListener('click', () => switchTab('fields'));
+    elements.addUserBtn.addEventListener('click', openAddUserModal);
+    elements.addFieldBtn.addEventListener('click', openAddFieldModal);
+    elements.userForm.addEventListener('submit', saveUser);
+    elements.fieldForm.addEventListener('submit', saveField);
+    elements.closeUserModal.addEventListener('click', () => closeModal(elements.userModal));
+    elements.cancelUserModal.addEventListener('click', () => closeModal(elements.userModal));
+    elements.closeFieldModal.addEventListener('click', () => closeModal(elements.fieldModal));
+    elements.cancelFieldModal.addEventListener('click', () => closeModal(elements.fieldModal));
+    elements.closeDeleteModal.addEventListener('click', () => closeModal(elements.deleteModal));
+    elements.cancelDelete.addEventListener('click', () => closeModal(elements.deleteModal));
+    elements.confirmDelete.addEventListener('click', async () => {
+      if (deleteCallback) {
+        const shouldClose = await deleteCallback();
+        if (shouldClose !== false) {
+          deleteCallback = null;
+          closeModal(elements.deleteModal);
+        }
+      }
+    });
+    elements.logoutBtn.addEventListener('click', () => auth.logout());
+
+    // Start
+    if (session) {
+      initialize();
+    }
+  </script>
+</body>
+</html>
