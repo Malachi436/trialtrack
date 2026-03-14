@@ -170,12 +170,11 @@ const entry = (() => {
 
   /**
    * Check if user can select a different parameter
-   * Only allowed if current parameter is complete or no parameter selected
+   * Now always returns true - users can freely switch between parameters
    * @returns {boolean}
    */
   function canChangeParameter() {
-    if (!currentParameter) return true;
-    return isParameterComplete(currentParameter);
+    return true; // Allow free parameter selection
   }
 
   /**
@@ -191,13 +190,10 @@ const entry = (() => {
   /**
    * Set the current parameter
    * @param {number} paramNumber - Parameter number (1-6)
-   * @returns {boolean} - Whether selection was allowed
+   * @returns {boolean} - Always true now (no locking)
    */
   function selectParameter(paramNumber) {
-    // Can only change if current is complete or none selected
-    if (currentParameter && !isParameterComplete(currentParameter)) {
-      return false;
-    }
+    // Allow selecting any parameter freely
     currentParameter = paramNumber;
     currentBlock = null;
     return true;
