@@ -18,7 +18,20 @@ const entry = (() => {
    * @param {Object} field - The assigned field object
    */
   async function init(field) {
+    console.log('[Entry] Initializing with field:', field);
+    console.log('[Entry] Field growth_params:', field?.growth_params);
+    console.log('[Entry] Field yield_params:', field?.yield_params);
+    console.log('[Entry] Field growth_param_count:', field?.growth_param_count);
+    console.log('[Entry] Field yield_param_count:', field?.yield_param_count);
+    
     currentField = field;
+    
+    // Log what parameters will be used
+    const growthLabels = getGrowthParamLabels();
+    const yieldLabels = getYieldParamLabels();
+    console.log('[Entry] Using growth labels:', growthLabels);
+    console.log('[Entry] Using yield labels:', yieldLabels);
+    
     await refreshRoundStatus();
   }
 

@@ -187,13 +187,20 @@ const admin = (() => {
       return { error: 'Planting date is required.' };
     }
 
-    // Create field
+    // Create field with new parameter structure
     const field = {
       name: fieldData.name.trim(),
       location: fieldData.location?.trim() || null,
       planting_date: fieldData.planting_date,
       measurement_interval_days: fieldData.measurement_interval_days || CONFIG.DEFAULT_INTERVAL_DAYS,
       window_days: fieldData.window_days || CONFIG.DEFAULT_WINDOW_DAYS,
+      // New parameter structure
+      growth_param_count: fieldData.growth_param_count || CONFIG.DEFAULT_GROWTH_PARAM_COUNT,
+      yield_param_count: fieldData.yield_param_count || CONFIG.DEFAULT_YIELD_PARAM_COUNT,
+      growth_params: fieldData.growth_params || CONFIG.DEFAULT_GROWTH_PARAMS,
+      yield_params: fieldData.yield_params || CONFIG.DEFAULT_YIELD_PARAMS,
+      soil_analysis_fields: fieldData.soil_analysis_fields || CONFIG.DEFAULT_SOIL_FIELDS,
+      // Legacy param fields for backward compatibility
       param1: fieldData.param1 || 'Parameter 1',
       param2: fieldData.param2 || 'Parameter 2',
       param3: fieldData.param3 || 'Parameter 3',
@@ -202,10 +209,26 @@ const admin = (() => {
       param6: fieldData.param6 || 'Parameter 6'
     };
 
+    console.log('[Admin] Creating field with params:', {
+      growth_param_count: field.growth_param_count,
+      yield_param_count: field.yield_param_count,
+      growth_params: field.growth_params,
+      yield_params: field.yield_params
+    });
+
     const result = await api.createField(field);
+
+    console.log('[Admin] Field creation result:', result);
 
     if (!result.error && result.data) {
       const newField = result.data[0] || result.data;
+      
+      console.log('[Admin] New field data from API:', newField);
+      console.log('[Admin] growth_params in new field:', newField.growth_params);
+      console.log('[Admin] yield_params in new field:', newField.yield_params);
+      
+      // Clear API cache to ensure fresh data
+      api.clearCache();
       
       // Seed the field structure (blocks and plots)
       const seedResult = await api.seedFieldStructure(newField.id);

@@ -311,6 +311,23 @@
               </div>
             </div>
           </div>
+
+          <!-- Soil Analysis Comparison Section -->
+          <div class="chart-card" style="margin-top: var(--space-4);" id="soilAnalysisSection">
+            <div class="chart-card-header">
+              <div>
+                <h3 class="chart-card-title">Soil Analysis Comparison</h3>
+                <p class="chart-card-subtitle">Before and after experiment soil analysis data</p>
+              </div>
+            </div>
+            <div class="chart-card-body">
+              <div id="soilAnalysisContent">
+                <div class="round-summary-empty">
+                  <p>No soil analysis data available for this field</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
@@ -380,7 +397,11 @@
       overviewPlotSelect: document.getElementById('overviewPlotSelect'),
       overviewTreatmentSelect: document.getElementById('overviewTreatmentSelect'),
       roundSummary: document.getElementById('roundSummary'),
-      plotDetailsContainer: document.getElementById('plotDetailsContainer')
+      plotDetailsContainer: document.getElementById('plotDetailsContainer'),
+      
+      // Soil Analysis
+      soilAnalysisSection: document.getElementById('soilAnalysisSection'),
+      soilAnalysisContent: document.getElementById('soilAnalysisContent')
     };
 
     // ============================================
@@ -450,10 +471,23 @@
     }
 
     function renderParamLabels() {
-      const labels = analytics.getParamLabels();
-      elements.paramSelect.innerHTML = labels.map((label, i) => 
-        `<option value="p${i + 1}">${utils.escapeHtml(label)}</option>`
-      ).join('');
+      const growthParams = analytics.getGrowthParamLabels();
+      const yieldParams = analytics.getYieldParamLabels();
+      
+      let html = '<optgroup label="Growth Parameters">';
+      growthParams.forEach((label, i) => {
+        html += `<option value="p${i + 1}">${utils.escapeHtml(label)}</option>`;
+      });
+      html += '</optgroup>';
+      
+      html += '<optgroup label="Yield Parameters">';
+      yieldParams.forEach((label, i) => {
+        const paramIndex = growthParams.length + i + 1;
+        html += `<option value="p${paramIndex}">${utils.escapeHtml(label)}</option>`;
+      });
+      html += '</optgroup>';
+      
+      elements.paramSelect.innerHTML = html;
     }
 
     function updateCharts() {
@@ -568,6 +602,21 @@
         return;
       }
 
+      // Build dynamic table headers based on parameter counts
+      const growthParams = analytics.getGrowthParamLabels();
+      const yieldParams = analytics.getYieldParamLabels();
+      const totalParams = growthParams.length + yieldParams.length;
+      
+      let paramHeaders = '';
+      // Growth params headers
+      growthParams.forEach((label, i) => {
+        paramHeaders += `<th class="growth-param-header">${utils.escapeHtml(label)}</th>`;
+      });
+      // Yield params headers
+      yieldParams.forEach((label, i) => {
+        paramHeaders += `<th class="yield-param-header">${utils.escapeHtml(label)}</th>`;
+      });
+
       let tableHtml = `
         <div class="table-container">
           <table class="plot-details-table">
@@ -576,12 +625,7 @@
                 <th>Plot</th>
                 <th>Block</th>
                 <th>Treatment</th>
-                <th>${utils.escapeHtml(paramLabels[0])}</th>
-                <th>${utils.escapeHtml(paramLabels[1])}</th>
-                <th>${utils.escapeHtml(paramLabels[2])}</th>
-                <th>${utils.escapeHtml(paramLabels[3])}</th>
-                <th>${utils.escapeHtml(paramLabels[4])}</th>
-                <th>${utils.escapeHtml(paramLabels[5])}</th>
+                ${paramHeaders}
                 <th>Entered By</th>
               </tr>
             </thead>
@@ -589,17 +633,20 @@
       `;
 
       overviewData.entries.forEach(entry => {
+        // Build dynamic parameter cells
+        let paramCells = '';
+        for (let i = 1; i <= totalParams; i++) {
+          const paramKey = `p${i}`;
+          const value = entry[paramKey];
+          paramCells += `<td class="numeric">${value !== null && value !== undefined ? utils.formatNumber(value) : '—'}</td>`;
+        }
+        
         tableHtml += `
           <tr>
             <td><strong>${entry.plot_number}</strong></td>
             <td>${entry.block_number}</td>
             <td><span class="chip ${utils.getTreatmentChipClass(entry.treatment)} chip-sm">${entry.treatment}</span></td>
-            <td class="numeric">${entry.p1 !== null ? utils.formatNumber(entry.p1) : '—'}</td>
-            <td class="numeric">${entry.p2 !== null ? utils.formatNumber(entry.p2) : '—'}</td>
-            <td class="numeric">${entry.p3 !== null ? utils.formatNumber(entry.p3) : '—'}</td>
-            <td class="numeric">${entry.p4 !== null ? utils.formatNumber(entry.p4) : '—'}</td>
-            <td class="numeric">${entry.p5 !== null ? utils.formatNumber(entry.p5) : '—'}</td>
-            <td class="numeric">${entry.p6 !== null ? utils.formatNumber(entry.p6) : '—'}</td>
+            ${paramCells}
             <td class="text-secondary">${utils.escapeHtml(entry.entered_by || '—')}</td>
           </tr>
         `;
@@ -607,6 +654,112 @@
 
       tableHtml += '</tbody></table></div>';
       elements.plotDetailsContainer.innerHTML = tableHtml;
+    }
+
+    // ============================================
+    // SOIL ANALYSIS
+    // ============================================
+
+    async function loadSoilAnalysisComparison() {
+      const field = analytics.getCurrentField();
+      if (!field) {
+        elements.soilAnalysisContent.innerHTML = `
+          <div class="round-summary-empty">
+            <p>No soil analysis data available for this field</p>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        const result = await api.getSoilAnalysis(field.id);
+        if (result.error || !result.data || result.data.length === 0) {
+          elements.soilAnalysisContent.innerHTML = `
+            <div class="round-summary-empty">
+              <p>No soil analysis data available for this field</p>
+            </div>
+          `;
+          return;
+        }
+
+        const beforeData = result.data.find(d => d.analysis_type === 'before');
+        const afterData = result.data.find(d => d.analysis_type === 'after');
+
+        if (!beforeData && !afterData) {
+          elements.soilAnalysisContent.innerHTML = `
+            <div class="round-summary-empty">
+              <p>No soil analysis data available for this field</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Get soil fields from field settings or defaults
+        const soilFields = field.soil_analysis_fields || CONFIG.DEFAULT_SOIL_FIELDS;
+
+        // Build comparison table
+        let html = `
+          <div class="table-container">
+            <table class="plot-details-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Before Experiment</th>
+                  <th>After Experiment</th>
+                  <th>Change</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        soilFields.forEach((fieldName, index) => {
+          const beforeValue = beforeData?.values?.[index];
+          const afterValue = afterData?.values?.[index];
+          
+          let changeDisplay = '—';
+          let changeClass = '';
+          
+          if (beforeValue !== null && beforeValue !== undefined && 
+              afterValue !== null && afterValue !== undefined) {
+            const change = afterValue - beforeValue;
+            const changePercent = beforeValue !== 0 ? ((change / beforeValue) * 100).toFixed(1) : 0;
+            changeDisplay = change >= 0 ? `+${utils.formatNumber(change)}` : utils.formatNumber(change);
+            changeDisplay += ` (${changePercent}%)`;
+            changeClass = change > 0 ? 'positive-change' : (change < 0 ? 'negative-change' : '');
+          }
+
+          html += `
+            <tr>
+              <td><strong>${utils.escapeHtml(fieldName)}</strong></td>
+              <td class="numeric">${beforeValue !== null && beforeValue !== undefined ? utils.formatNumber(beforeValue) : '—'}</td>
+              <td class="numeric">${afterValue !== null && afterValue !== undefined ? utils.formatNumber(afterValue) : '—'}</td>
+              <td class="numeric ${changeClass}">${changeDisplay}</td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table></div>';
+
+        // Add metadata
+        html += '<div class="soil-analysis-meta" style="margin-top: var(--space-3); display: flex; gap: var(--space-4); font-size: var(--text-sm); color: var(--color-text-secondary);">';
+        if (beforeData) {
+          html += `<span>Before: Submitted by ${utils.escapeHtml(beforeData.submitted_by || 'Unknown')} on ${new Date(beforeData.submitted_at).toLocaleDateString()}</span>`;
+        }
+        if (afterData) {
+          html += `<span>After: Submitted by ${utils.escapeHtml(afterData.submitted_by || 'Unknown')} on ${new Date(afterData.submitted_at).toLocaleDateString()}</span>`;
+        }
+        html += '</div>';
+
+        elements.soilAnalysisContent.innerHTML = html;
+
+      } catch (error) {
+        console.error('Error loading soil analysis:', error);
+        elements.soilAnalysisContent.innerHTML = `
+          <div class="round-summary-empty">
+            <p>Error loading soil analysis data</p>
+          </div>
+        `;
+      }
     }
 
     // ============================================
@@ -634,6 +787,7 @@
         renderParamLabels();
         renderOverviewRoundSelect();
         updateCharts();
+        loadSoilAnalysisComparison();
 
         elements.loadingState.classList.add('hidden');
         elements.analyticsContent.classList.remove('hidden');
@@ -710,6 +864,7 @@
       renderParamLabels();
       renderOverviewRoundSelect();
       updateCharts();
+      loadSoilAnalysisComparison();
       // Reset round overview
       elements.overviewRoundSelect.value = '';
       elements.overviewBlockSelect.value = 'all';

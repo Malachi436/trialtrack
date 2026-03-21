@@ -196,6 +196,47 @@
       background: var(--color-warning-light);
       color: var(--color-warning);
     }
+    
+    /* Soil Analysis Section */
+    .soil-analysis-section {
+      padding: var(--space-4);
+    }
+    .soil-analysis-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      border: 2px solid var(--color-primary-light);
+    }
+    .soil-analysis-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+    .soil-icon {
+      width: 40px;
+      height: 40px;
+      color: var(--color-primary);
+    }
+    .soil-analysis-title {
+      font-size: var(--text-xl);
+      font-weight: 600;
+      color: var(--color-text);
+    }
+    .soil-analysis-desc {
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-4);
+    }
+    .soil-input-row {
+      margin-bottom: var(--space-3);
+    }
+    .soil-input-label {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-1);
+    }
 
     /* Parameter dropdown styles */
     .param-dropdown-container {
@@ -423,6 +464,32 @@
         </div>
       </div>
 
+      <!-- Soil Analysis Notification/Form -->
+      <div id="soilAnalysisSection" class="soil-analysis-section hidden">
+        <div class="soil-analysis-card">
+          <div class="soil-analysis-header">
+            <svg class="soil-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 22 16 8"/>
+              <path d="m22 2-4 4"/>
+              <path d="M18 2v4"/>
+              <path d="M22 6h-4"/>
+              <path d="M6 18a2 2 0 1 1 0 4 2 2 0 0 1 0-4"/>
+            </svg>
+            <h3 class="soil-analysis-title" id="soilAnalysisTitle">Soil Analysis Required</h3>
+          </div>
+          <p class="soil-analysis-desc" id="soilAnalysisDesc">Please submit the soil analysis data for this field.</p>
+          
+          <form id="soilAnalysisForm" class="soil-analysis-form">
+            <div id="soilFieldInputs">
+              <!-- Dynamic soil field inputs -->
+            </div>
+            <div class="form-actions mt-4">
+              <button type="submit" class="btn btn-primary btn-block" id="submitSoilBtn">Submit Soil Analysis</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <!-- Parameter Selector (Step 1) -->
       <div id="paramSelector" class="param-selector hidden">
         <h3 class="param-selector-title">Select Parameter</h3>
@@ -541,6 +608,14 @@
       lockedMessage: document.getElementById('lockedMessage'),
       countdownDays: document.getElementById('countdownDays'),
       
+      // Soil Analysis
+      soilAnalysisSection: document.getElementById('soilAnalysisSection'),
+      soilAnalysisTitle: document.getElementById('soilAnalysisTitle'),
+      soilAnalysisDesc: document.getElementById('soilAnalysisDesc'),
+      soilAnalysisForm: document.getElementById('soilAnalysisForm'),
+      soilFieldInputs: document.getElementById('soilFieldInputs'),
+      submitSoilBtn: document.getElementById('submitSoilBtn'),
+      
       // Parameter selector
       paramBtnContainer: document.getElementById('paramBtnContainer'),
       paramDropdown: document.getElementById('paramDropdown'),
@@ -582,6 +657,7 @@
       elements.fieldStatus.classList.add('hidden');
       elements.progressIndicator.classList.add('hidden');
       elements.lockedState.classList.add('hidden');
+      elements.soilAnalysisSection.classList.add('hidden');
       elements.paramSelector.classList.add('hidden');
       elements.blockSelector.classList.add('hidden');
       elements.blockEntryForm.classList.add('hidden');
@@ -598,6 +674,10 @@
         case 'locked':
           elements.fieldStatus.classList.remove('hidden');
           elements.lockedState.classList.remove('hidden');
+          break;
+        case 'soil':
+          elements.fieldStatus.classList.remove('hidden');
+          elements.soilAnalysisSection.classList.remove('hidden');
           break;
         case 'params':
           elements.fieldStatus.classList.remove('hidden');
@@ -988,6 +1068,107 @@
     }
 
     // ============================================
+    // SOIL ANALYSIS
+    // ============================================
+    
+    let pendingSoilType = null;
+    let currentFieldData = null;
+    
+    async function checkAndShowSoilAnalysis(field) {
+      currentFieldData = field;
+      
+      // Check if there's a pending soil analysis
+      const beforePending = field.soil_before_status === 'pending';
+      const afterPending = field.soil_after_status === 'pending';
+      
+      if (beforePending || afterPending) {
+        pendingSoilType = beforePending ? 'before' : 'after';
+        
+        // Check if already submitted by someone
+        const soilResult = await api.getSoilAnalysisByType(field.id, pendingSoilType);
+        if (soilResult.data) {
+          // Already submitted
+          pendingSoilType = null;
+          return false;
+        }
+        
+        // Show soil analysis form
+        const typeLabel = pendingSoilType === 'before' ? 'Before Experiment' : 'After Experiment';
+        elements.soilAnalysisTitle.textContent = `${typeLabel} Soil Analysis`;
+        elements.soilAnalysisDesc.textContent = `Please enter the soil analysis data for this field (${typeLabel.toLowerCase()}).`;
+        
+        renderSoilInputs(field.soil_analysis_fields || CONFIG.DEFAULT_SOIL_FIELDS);
+        return true;
+      }
+      
+      return false;
+    }
+    
+    function renderSoilInputs(soilFields) {
+      let html = '';
+      soilFields.forEach(fieldName => {
+        const inputId = `soil_${fieldName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        html += `
+          <div class="soil-input-row">
+            <label class="soil-input-label" for="${inputId}">${utils.escapeHtml(fieldName)}</label>
+            <input type="text" class="form-input soil-data-input" id="${inputId}" 
+                   data-field="${utils.escapeHtml(fieldName)}" 
+                   placeholder="Enter value" required>
+          </div>`;
+      });
+      elements.soilFieldInputs.innerHTML = html;
+    }
+    
+    async function handleSoilSubmit(e) {
+      e.preventDefault();
+      
+      if (!pendingSoilType || !currentFieldData) return;
+      
+      elements.submitSoilBtn.disabled = true;
+      elements.submitSoilBtn.textContent = 'Submitting...';
+      
+      // Collect soil data
+      const soilData = {};
+      elements.soilFieldInputs.querySelectorAll('.soil-data-input').forEach(input => {
+        const fieldName = input.dataset.field;
+        soilData[fieldName] = input.value.trim();
+      });
+      
+      // Save soil analysis
+      const result = await api.saveSoilAnalysis({
+        field_id: currentFieldData.id,
+        analysis_type: pendingSoilType,
+        recorded_by: session.id,
+        recorded_by_name: session.username,
+        recorded_date: new Date().toISOString().split('T')[0],
+        data: soilData
+      });
+      
+      if (result.error) {
+        showToast(result.error, 'error');
+        elements.submitSoilBtn.disabled = false;
+        elements.submitSoilBtn.textContent = 'Submit Soil Analysis';
+        return;
+      }
+      
+      // Update field status to complete
+      const statusField = pendingSoilType === 'before' ? 'soil_before_status' : 'soil_after_status';
+      await api.updateSoilAnalysisStatus(currentFieldData.id, statusField, 'complete');
+      
+      showToast('Soil analysis submitted successfully!', 'success');
+      pendingSoilType = null;
+      
+      // Check if data entry should proceed
+      const progress = entry.getProgress();
+      if (progress.percentage === 100) {
+        showView('complete');
+      } else {
+        renderParamSelector();
+        showView('params');
+      }
+    }
+
+    // ============================================
     // MAIN INITIALIZATION
     // ============================================
 
@@ -1011,6 +1192,9 @@
           return;
         }
         
+        // Clear API cache to ensure fresh data
+        api.clearCache();
+        
         // Get field details
         const fieldResult = await api.getField(fieldId);
         if (fieldResult.error || !fieldResult.data) {
@@ -1019,9 +1203,20 @@
           return;
         }
         
+        console.log('[FieldWorker] Field data received:', fieldResult.data);
+        console.log('[FieldWorker] growth_params:', fieldResult.data.growth_params);
+        console.log('[FieldWorker] yield_params:', fieldResult.data.yield_params);
+        
         // Initialize entry module
         await entry.init(fieldResult.data);
         updateFieldStatus();
+        
+        // Check for pending soil analysis first
+        const hasPendingSoil = await checkAndShowSoilAnalysis(fieldResult.data);
+        if (hasPendingSoil) {
+          showView('soil');
+          return;
+        }
         
         // Check if data entry is allowed
         const windowStatus = entry.getWindowStatus();
@@ -1062,6 +1257,7 @@
     elements.backToBlocks.addEventListener('click', goToBlocks);
     elements.reviewDataBtn.addEventListener('click', goToParams);
     elements.blockDataForm.addEventListener('submit', handleBlockSubmit);
+    elements.soilAnalysisForm.addEventListener('submit', handleSoilSubmit);
     
     // Parameter dropdown selection
     elements.paramDropdown.addEventListener('change', (e) => {

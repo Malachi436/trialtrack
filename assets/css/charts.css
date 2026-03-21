@@ -468,3 +468,25 @@
     min-width: 80px;
   }
 }
+
+/* ============================================
+   SOIL ANALYSIS COMPARISON
+   ============================================ */
+
+.positive-change {
+  color: var(--color-success) !important;
+  font-weight: var(--font-medium);
+}
+
+.negative-change {
+  color: var(--color-danger) !important;
+  font-weight: var(--font-medium);
+}
+
+.growth-param-header {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.yield-param-header {
+  background-color: rgba(245, 158, 11, 0.1);
+}

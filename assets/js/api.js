@@ -258,7 +258,14 @@ const api = (() => {
    */
   async function getField(fieldId) {
     const url = buildUrl('fields', `id=eq.${encodeURIComponent(fieldId)}&select=*`);
+    console.log('[API] getField fetching:', url);
     const result = await request(url);
+    
+    console.log('[API] getField result:', result);
+    if (!result.error && result.data) {
+      console.log('[API] Field growth_params from DB:', result.data[0]?.growth_params);
+      console.log('[API] Field yield_params from DB:', result.data[0]?.yield_params);
+    }
     
     if (result.error) return result;
     return { data: result.data?.[0] || null, error: null };
@@ -270,15 +277,25 @@ const api = (() => {
    * @returns {Promise<Object>}
    */
   async function createField(fieldData) {
+    console.log('[API] createField sending data:', fieldData);
+    console.log('[API] growth_params type:', typeof fieldData.growth_params, fieldData.growth_params);
+    console.log('[API] growth_params isArray:', Array.isArray(fieldData.growth_params));
+    
     const sanitized = utils.sanitizeObject(fieldData);
+    console.log('[API] After sanitize, growth_params:', sanitized.growth_params);
+    
+    const bodyData = {
+      ...sanitized,
+      created_at: new Date().toISOString()
+    };
+    console.log('[API] Body data to stringify:', bodyData);
+    console.log('[API] JSON.stringify preview:', JSON.stringify(bodyData).substring(0, 500));
+    
     const url = buildUrl('fields');
     return request(url, {
       method: 'POST',
       headers: { 'Prefer': 'return=representation' },
-      body: JSON.stringify({
-        ...sanitized,
-        created_at: new Date().toISOString()
-      })
+      body: JSON.stringify(bodyData)
     });
   }
 

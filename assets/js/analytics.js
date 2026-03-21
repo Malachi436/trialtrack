@@ -391,14 +391,48 @@ const analytics = (() => {
     const field = getCurrentField();
     if (!field) return CONFIG.DEFAULT_PARAMETERS;
     
-    return [
-      field.param1 || 'Parameter 1',
-      field.param2 || 'Parameter 2',
-      field.param3 || 'Parameter 3',
-      field.param4 || 'Parameter 4',
-      field.param5 || 'Parameter 5',
-      field.param6 || 'Parameter 6'
-    ];
+    const growthParams = field.growth_params || CONFIG.DEFAULT_GROWTH_PARAMS;
+    const yieldParams = field.yield_params || CONFIG.DEFAULT_YIELD_PARAMS;
+    return [...growthParams, ...yieldParams];
+  }
+
+  /**
+   * Get growth parameter labels for current field
+   */
+  function getGrowthParamLabels() {
+    const field = getCurrentField();
+    if (!field) return CONFIG.DEFAULT_GROWTH_PARAMS;
+    return field.growth_params || CONFIG.DEFAULT_GROWTH_PARAMS;
+  }
+
+  /**
+   * Get yield parameter labels for current field
+   */
+  function getYieldParamLabels() {
+    const field = getCurrentField();
+    if (!field) return CONFIG.DEFAULT_YIELD_PARAMS;
+    return field.yield_params || CONFIG.DEFAULT_YIELD_PARAMS;
+  }
+
+  /**
+   * Get parameter counts for current field
+   */
+  function getParamCounts() {
+    const growthParams = getGrowthParamLabels();
+    const yieldParams = getYieldParamLabels();
+    return {
+      growth: growthParams.length,
+      yield: yieldParams.length,
+      total: growthParams.length + yieldParams.length
+    };
+  }
+
+  /**
+   * Check if a parameter number is a growth param
+   */
+  function isGrowthParam(paramNum) {
+    const counts = getParamCounts();
+    return paramNum <= counts.growth;
   }
 
   /**
@@ -429,6 +463,10 @@ const analytics = (() => {
     getAvailableRounds,
     getRoundOverviewData,
     getParamLabels,
+    getGrowthParamLabels,
+    getYieldParamLabels,
+    getParamCounts,
+    isGrowthParam,
     refresh
   };
 })();
