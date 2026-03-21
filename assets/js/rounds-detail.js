@@ -127,7 +127,7 @@
           
           let paramCells = '';
           paramLabels.forEach((_, i) => {
-            const paramKey = 'param' + (i + 1);
+            const paramKey = 'p' + (i + 1); // Fix: use p1, p2... not param1, param2...
             const value = entry[paramKey];
             paramCells += '<td>' + (value !== null && value !== undefined ? value : '—') + '</td>';
           });
@@ -165,6 +165,60 @@
         '<table class="table"><thead>' + headerHtml + '</thead><tbody>' + rows + '</tbody></table></div>' +
         '<div class="mt-4 p-3" style="background: var(--color-surface-secondary); border-radius: var(--radius-md);">' +
         '<p class="text-sm"><strong>Summary:</strong> Entered by ' + (summaryText || 'No entries yet') + '</p></div>';
+      
+      // Render action log
+      renderActionLog(entries);
+    }
+
+    function renderActionLog(entries) {
+      const container = document.getElementById('roundActionLog');
+      if (!container) return;
+      
+      const entryCount = entries.length;
+      
+      // Sort entries chronologically (oldest first)
+      const sortedEntries = [...entries].sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
+        const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+        return dateA - dateB;
+      });
+      
+      let html = '<div style="border-top: 1px solid var(--color-border); margin-top: var(--space-6); padding-top: var(--space-4);">';
+      html += '<div class="flex items-center justify-between mb-3">';
+      html += '<h4 class="text-md font-semibold">ACTION LOG</h4>';
+      html += '<span class="badge badge-muted">' + entryCount + ' ' + (entryCount === 1 ? 'entry' : 'entries') + '</span>';
+      html += '</div>';
+      html += '<div style="max-height: 300px; overflow-y: auto;">';
+      
+      if (sortedEntries.length === 0) {
+        html += '<p class="text-muted text-sm" style="padding: 12px 0;">No log entries yet.</p>';
+      } else {
+        sortedEntries.forEach((entry, index) => {
+          const username = utils.escapeHtml(entry.entered_by || 'Unknown');
+          const plotNum = entry.plot_number;
+          const treatment = entry.treatment || 'I';
+          const treatmentName = CONFIG.TREATMENTS[treatment] || treatment;
+          const dateTime = entry.created_at ? formatDateTime(entry.created_at) : '—';
+          
+          // Avatar: first 2 letters of username, uppercase
+          const initials = username.length >= 2 
+            ? username.substring(0, 2).toUpperCase() 
+            : username.toUpperCase().padEnd(2, '?');
+          
+          // Avatar background color based on treatment
+          const avatarBgClass = 't-' + treatment;
+          
+          const isLast = index === sortedEntries.length - 1;
+          html += '<div class="flex items-center gap-2" style="padding: 8px 0; ' + (isLast ? '' : 'border-bottom: 1px solid var(--color-border);') + '">';
+          html += '<div style="width: 28px; height: 28px; border-radius: 50%; background: var(--color-' + avatarBgClass + ', var(--color-primary)); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; flex-shrink: 0;">' + initials + '</div>';
+          html += '<span style="font-size: 13px; color: var(--color-text-secondary);">' + username + ' recorded Plot ' + plotNum + ' (' + treatmentName + ')</span>';
+          html += '<span style="color: var(--color-text-muted); margin-left: auto; white-space: nowrap; font-size: 12px;">' + dateTime + '</span>';
+          html += '</div>';
+        });
+      }
+      
+      html += '</div></div>';
+      container.innerHTML = html;
     }
 
     function formatDateTime(isoString) {
