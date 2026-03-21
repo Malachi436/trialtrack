@@ -55,6 +55,27 @@ const admin = (() => {
     return fields;
   }
 
+  /**
+   * Get field by ID
+   */
+  function getFieldById(fieldId) {
+    return fields.find(f => f.id === fieldId) || null;
+  }
+
+  /**
+   * Get rounds for a field
+   */
+  async function getFieldRounds(fieldId) {
+    return api.getRoundsForField(fieldId);
+  }
+
+  /**
+   * Get entries for a round
+   */
+  async function getRoundEntries(roundId) {
+    return api.getEntriesForRound(roundId);
+  }
+
   // ============================================
   // USER MANAGEMENT
   // ============================================
@@ -350,6 +371,9 @@ const admin = (() => {
     setTab,
     getUsers,
     getFields,
+    getFieldById,
+    getFieldRounds,
+    getRoundEntries,
     createUser,
     updateUser,
     deleteUser,
@@ -363,4 +387,5 @@ const admin = (() => {
 
 // Freeze admin object
 Object.freeze(admin);
+
 
