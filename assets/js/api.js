@@ -312,13 +312,13 @@ const api = (() => {
   }
 
   /**
-   * Get field settings (parameters, intervals)
+   * Get field settings (parameters, intervals, soil analysis config)
    * @param {string} fieldId
    * @returns {Promise<Object>}
    */
   async function getFieldSettings(fieldId) {
     const url = buildUrl('fields', 
-      `id=eq.${encodeURIComponent(fieldId)}&select=id,name,measurement_interval_days,window_days,param1,param2,param3,param4,param5,param6`
+      `id=eq.${encodeURIComponent(fieldId)}&select=id,name,measurement_interval_days,window_days,param1,param2,param3,param4,param5,param6,growth_param_count,yield_param_count,growth_params,yield_params,soil_analysis_fields,soil_before_status,soil_after_status`
     );
     const result = await request(url);
     
@@ -739,6 +739,66 @@ const api = (() => {
     return { data: result.data?.length || 0, error: null };
   }
 
+  // ============================================
+  // SOIL ANALYSIS
+  // ============================================
+
+  /**
+   * Get soil analysis records for a field
+   * @param {string} fieldId
+   * @returns {Promise<Object>}
+   */
+  async function getSoilAnalysis(fieldId) {
+    const url = buildUrl('soil_analysis', 
+      `field_id=eq.${encodeURIComponent(fieldId)}&select=*&order=analysis_type.asc`
+    );
+    return request(url);
+  }
+
+  /**
+   * Get soil analysis by type (before/after)
+   * @param {string} fieldId
+   * @param {string} analysisType - 'before' or 'after'
+   * @returns {Promise<Object>}
+   */
+  async function getSoilAnalysisByType(fieldId, analysisType) {
+    const url = buildUrl('soil_analysis', 
+      `field_id=eq.${encodeURIComponent(fieldId)}&analysis_type=eq.${encodeURIComponent(analysisType)}&select=*`
+    );
+    const result = await request(url);
+    
+    if (result.error) return result;
+    return { data: result.data?.[0] || null, error: null };
+  }
+
+  /**
+   * Save soil analysis record
+   * @param {Object} analysisData - { field_id, analysis_type, recorded_by, recorded_by_name, recorded_date, data }
+   * @returns {Promise<Object>}
+   */
+  async function saveSoilAnalysis(analysisData) {
+    const url = buildUrl('soil_analysis');
+    return request(url, {
+      method: 'POST',
+      headers: { 'Prefer': 'return=representation' },
+      body: JSON.stringify({
+        ...analysisData,
+        created_at: new Date().toISOString()
+      })
+    });
+  }
+
+  /**
+   * Update soil analysis status on field
+   * @param {string} fieldId
+   * @param {string} statusType - 'soil_before_status' or 'soil_after_status'
+   * @param {string} status - 'none', 'pending', 'complete'
+   * @returns {Promise<Object>}
+   */
+  async function updateSoilAnalysisStatus(fieldId, statusType, status) {
+    return updateField(fieldId, { [statusType]: status });
+  }
+
   // Return public API
   return {
     // Utils
@@ -788,7 +848,13 @@ const api = (() => {
     // Statistics
     getTotalEntryCount,
     getFieldCount,
-    getActiveRoundsCount
+    getActiveRoundsCount,
+    
+    // Soil Analysis
+    getSoilAnalysis,
+    getSoilAnalysisByType,
+    saveSoilAnalysis,
+    updateSoilAnalysisStatus
   };
 })();
 

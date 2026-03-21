@@ -74,12 +74,14 @@ const entry = (() => {
   }
 
   /**
-   * Check if the current round is fully complete (all 30 param-block combinations)
+   * Check if the current round is fully complete (all param-block combinations)
    * @returns {boolean}
    */
   function isRoundComplete() {
-    // A round is complete when all 30 param-block combinations are done
-    return completedParamBlocks.size === 30;
+    // A round is complete when all param-block combinations are done
+    const counts = getParameterCounts();
+    const totalCombinations = counts.total * CONFIG.BLOCKS_PER_FIELD;
+    return completedParamBlocks.size === totalCombinations;
   }
 
   /**
@@ -105,8 +107,9 @@ const entry = (() => {
    * @returns {Object} - { entered, total, percentage }
    */
   function getProgress() {
-    // Total = 6 params × 5 blocks = 30 param-block combinations
-    const total = 30;
+    // Total = params × blocks = param-block combinations
+    const counts = getParameterCounts();
+    const total = counts.total * CONFIG.BLOCKS_PER_FIELD;
     const entered = completedParamBlocks.size;
     const percentage = Math.round((entered / total) * 100);
     return { entered, total, percentage };
@@ -143,10 +146,11 @@ const entry = (() => {
 
   /**
    * Get the first incomplete parameter (for auto-selection)
-   * @returns {number|null} - Parameter number (1-6) or null if all complete
+   * @returns {number|null} - Parameter number or null if all complete
    */
   function getFirstIncompleteParameter() {
-    for (let p = 1; p <= 6; p++) {
+    const counts = getParameterCounts();
+    for (let p = 1; p <= counts.total; p++) {
       if (!isParameterComplete(p)) {
         return p;
       }
@@ -230,18 +234,60 @@ const entry = (() => {
 
   /**
    * Get parameter labels for the current field
+   * Combines growth_params and yield_params
    * @returns {Array<string>}
    */
   function getParameterLabels() {
-    if (!currentField) return CONFIG.DEFAULT_PARAMETERS;
-    return [
-      currentField.param1 || 'Parameter 1',
-      currentField.param2 || 'Parameter 2',
-      currentField.param3 || 'Parameter 3',
-      currentField.param4 || 'Parameter 4',
-      currentField.param5 || 'Parameter 5',
-      currentField.param6 || 'Parameter 6'
-    ];
+    if (!currentField) {
+      return [...CONFIG.DEFAULT_GROWTH_PARAMS, ...CONFIG.DEFAULT_YIELD_PARAMS];
+    }
+    
+    const growthParams = currentField.growth_params || CONFIG.DEFAULT_GROWTH_PARAMS;
+    const yieldParams = currentField.yield_params || CONFIG.DEFAULT_YIELD_PARAMS;
+    
+    return [...growthParams, ...yieldParams];
+  }
+  
+  /**
+   * Get growth parameter labels only
+   * @returns {Array<string>}
+   */
+  function getGrowthParamLabels() {
+    if (!currentField) return CONFIG.DEFAULT_GROWTH_PARAMS;
+    return currentField.growth_params || CONFIG.DEFAULT_GROWTH_PARAMS;
+  }
+  
+  /**
+   * Get yield parameter labels only
+   * @returns {Array<string>}
+   */
+  function getYieldParamLabels() {
+    if (!currentField) return CONFIG.DEFAULT_YIELD_PARAMS;
+    return currentField.yield_params || CONFIG.DEFAULT_YIELD_PARAMS;
+  }
+  
+  /**
+   * Get parameter count configuration
+   * @returns {Object} - { growth, yield, total }
+   */
+  function getParameterCounts() {
+    const growth = currentField?.growth_param_count || CONFIG.DEFAULT_GROWTH_PARAM_COUNT;
+    const yieldCount = currentField?.yield_param_count || CONFIG.DEFAULT_YIELD_PARAM_COUNT;
+    return {
+      growth,
+      yield: yieldCount,
+      total: growth + yieldCount
+    };
+  }
+  
+  /**
+   * Check if a parameter number is a growth parameter
+   * @param {number} paramNum - Parameter number (1-based)
+   * @returns {boolean}
+   */
+  function isGrowthParam(paramNum) {
+    const counts = getParameterCounts();
+    return paramNum <= counts.growth;
   }
 
   /**
@@ -427,6 +473,10 @@ const entry = (() => {
     selectBlock,
     getBlockParameterData,
     getParameterLabels,
+    getGrowthParamLabels,
+    getYieldParamLabels,
+    getParameterCounts,
+    isGrowthParam,
     getCurrentParameterLabel,
     getCurrentContext,
     saveBlockParameter,

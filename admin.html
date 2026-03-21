@@ -15,6 +15,34 @@
   <link rel="stylesheet" href="assets/css/components.css">
   <link rel="stylesheet" href="assets/css/dashboard.css">
   
+  <style>
+    /* Soil field row styles */
+    .soil-field-row {
+      display: flex;
+      gap: var(--space-2);
+      margin-bottom: var(--space-2);
+    }
+    .soil-field-row .form-input {
+      flex: 1;
+    }
+    .btn-icon {
+      padding: var(--space-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .param-section {
+      border-top: 1px solid var(--color-border);
+      padding-top: var(--space-3);
+      margin-top: var(--space-3);
+    }
+    .param-section:first-of-type {
+      border-top: none;
+      padding-top: 0;
+      margin-top: var(--space-2);
+    }
+  </style>
+  
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg">
 </head>
@@ -66,6 +94,16 @@
             </svg>
             <span class="nav-item-label">Fields</span>
           </a>
+          <a href="admin.html#soil" class="nav-item" id="navSoil">
+            <svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 22 16 8"/>
+              <path d="m22 2-4 4"/>
+              <path d="M18 2v4"/>
+              <path d="M22 6h-4"/>
+              <path d="M6 18a2 2 0 1 1 0 4 2 2 0 0 1 0-4"/>
+            </svg>
+            <span class="nav-item-label">Soil Analysis</span>
+          </a>
         </div>
       </nav>
 
@@ -115,6 +153,7 @@
           <div class="flex gap-2 mb-6">
             <button class="btn btn-primary" id="tabUsers">Users</button>
             <button class="btn btn-secondary" id="tabFields">Fields</button>
+            <button class="btn btn-secondary" id="tabSoil">Soil Analysis</button>
           </div>
 
           <!-- Users Panel -->
@@ -201,6 +240,97 @@
               <p class="dashboard-empty-description">Create your first field to start tracking biochar soil treatment trials.</p>
             </div>
           </div>
+
+          <!-- Soil Analysis Panel -->
+          <div id="soilPanel" class="hidden">
+            <div class="section-header">
+              <h2 class="section-title">Soil Analysis Management</h2>
+            </div>
+            <p class="text-secondary mb-4">Manage pre-experiment and post-experiment soil analysis for each field. When initiated, field workers can submit soil data.</p>
+            
+            <!-- Field selector for soil analysis -->
+            <div class="form-group mb-4" style="max-width: 300px;">
+              <label class="form-label">Select Field</label>
+              <select class="form-input" id="soilFieldSelect">
+                <option value="">-- Select a field --</option>
+              </select>
+            </div>
+            
+            <!-- Soil analysis status panel -->
+            <div id="soilStatusPanel" class="hidden">
+              <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: var(--space-4); margin-bottom: var(--space-6);">
+                
+                <!-- Before Analysis Card -->
+                <div class="card" id="soilBeforeCard">
+                  <div class="card-header">
+                    <h3 class="card-title">Before Experiment</h3>
+                    <span class="badge" id="soilBeforeStatus">Not Started</span>
+                  </div>
+                  <div class="card-body">
+                    <p class="text-sm text-secondary mb-3" id="soilBeforeInfo">Initial soil analysis before the experiment begins.</p>
+                    <div id="soilBeforeActions">
+                      <button class="btn btn-primary" id="initiateSoilBefore">Initiate Analysis</button>
+                    </div>
+                    <div id="soilBeforeData" class="hidden mt-3">
+                      <!-- Data will be injected here -->
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- After Analysis Card -->
+                <div class="card" id="soilAfterCard">
+                  <div class="card-header">
+                    <h3 class="card-title">After Experiment</h3>
+                    <span class="badge" id="soilAfterStatus">Not Started</span>
+                  </div>
+                  <div class="card-body">
+                    <p class="text-sm text-secondary mb-3" id="soilAfterInfo">Final soil analysis after the experiment concludes.</p>
+                    <div id="soilAfterActions">
+                      <button class="btn btn-secondary" id="initiateSoilAfter" disabled>Initiate Analysis</button>
+                    </div>
+                    <div id="soilAfterData" class="hidden mt-3">
+                      <!-- Data will be injected here -->
+                    </div>
+                  </div>
+                </div>
+                
+              </div>
+              
+              <!-- Comparison View -->
+              <div id="soilComparisonSection" class="hidden">
+                <h3 class="text-md font-semibold mb-3">Before vs After Comparison</h3>
+                <div class="table-container">
+                  <table class="table" id="soilComparisonTable">
+                    <thead>
+                      <tr>
+                        <th>Property</th>
+                        <th>Before</th>
+                        <th>After</th>
+                        <th>Change</th>
+                      </tr>
+                    </thead>
+                    <tbody id="soilComparisonBody">
+                      <!-- Data injected dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Empty state -->
+            <div id="noSoilFieldSelected" class="dashboard-empty">
+              <svg class="dashboard-empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 22 16 8"/>
+                <path d="m22 2-4 4"/>
+                <path d="M18 2v4"/>
+                <path d="M22 6h-4"/>
+                <path d="M6 18a2 2 0 1 1 0 4 2 2 0 0 1 0-4"/>
+              </svg>
+              <h3 class="dashboard-empty-title">Select a Field</h3>
+              <p class="dashboard-empty-description">Choose a field from the dropdown to manage its soil analysis.</p>
+            </div>
+          </div>
+
         </div>
       </div>
     </main>
@@ -299,26 +429,63 @@
             </div>
           </div>
           
-          <h4 class="text-sm font-semibold text-secondary mt-4 mb-2">Parameter Names</h4>
-          <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: var(--space-3);">
-            <div class="form-group">
-              <input type="text" class="form-input" id="fieldParam1" placeholder="Parameter 1">
+          <!-- Growth Parameters Section -->
+          <div class="param-section">
+            <h4 class="text-sm font-semibold text-secondary mt-4 mb-2">Growth Parameters</h4>
+            <div class="form-group mb-3">
+              <label class="form-label">Number of Growth Parameters</label>
+              <select class="form-input" id="growthParamCount" style="max-width: 120px;">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+              </select>
             </div>
-            <div class="form-group">
-              <input type="text" class="form-input" id="fieldParam2" placeholder="Parameter 2">
+            <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: var(--space-3);" id="growthParamsContainer">
+              <!-- Growth param inputs injected dynamically -->
             </div>
-            <div class="form-group">
-              <input type="text" class="form-input" id="fieldParam3" placeholder="Parameter 3">
+          </div>
+          
+          <!-- Yield Parameters Section -->
+          <div class="param-section">
+            <h4 class="text-sm font-semibold text-secondary mt-4 mb-2">Yield Parameters</h4>
+            <div class="form-group mb-3">
+              <label class="form-label">Number of Yield Parameters</label>
+              <select class="form-input" id="yieldParamCount" style="max-width: 120px;">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+              </select>
             </div>
-            <div class="form-group">
-              <input type="text" class="form-input" id="fieldParam4" placeholder="Parameter 4">
+            <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: var(--space-3);" id="yieldParamsContainer">
+              <!-- Yield param inputs injected dynamically -->
             </div>
-            <div class="form-group">
-              <input type="text" class="form-input" id="fieldParam5" placeholder="Parameter 5">
+          </div>
+          
+          <!-- Soil Analysis Fields Section -->
+          <div class="param-section">
+            <h4 class="text-sm font-semibold text-secondary mt-4 mb-2">Soil Analysis Properties</h4>
+            <p class="text-xs text-muted mb-2">Define which soil properties to track for this field.</p>
+            <div id="soilFieldsContainer" class="soil-fields-list">
+              <!-- Soil field inputs injected dynamically -->
             </div>
-            <div class="form-group">
-              <input type="text" class="form-input" id="fieldParam6" placeholder="Parameter 6">
-            </div>
+            <button type="button" class="btn btn-sm btn-secondary mt-2" id="addSoilFieldBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              Add Property
+            </button>
           </div>
         </div>
         <div class="modal-footer">
@@ -383,10 +550,13 @@
       // Tabs
       tabUsers: document.getElementById('tabUsers'),
       tabFields: document.getElementById('tabFields'),
+      tabSoil: document.getElementById('tabSoil'),
       navUsers: document.getElementById('navUsers'),
       navFields: document.getElementById('navFields'),
+      navSoil: document.getElementById('navSoil'),
       usersPanel: document.getElementById('usersPanel'),
       fieldsPanel: document.getElementById('fieldsPanel'),
+      soilPanel: document.getElementById('soilPanel'),
       
       // Users
       usersTableBody: document.getElementById('usersTableBody'),
@@ -422,14 +592,33 @@
       fieldPlantingDate: document.getElementById('fieldPlantingDate'),
       fieldInterval: document.getElementById('fieldInterval'),
       fieldWindow: document.getElementById('fieldWindow'),
-      fieldParam1: document.getElementById('fieldParam1'),
-      fieldParam2: document.getElementById('fieldParam2'),
-      fieldParam3: document.getElementById('fieldParam3'),
-      fieldParam4: document.getElementById('fieldParam4'),
-      fieldParam5: document.getElementById('fieldParam5'),
-      fieldParam6: document.getElementById('fieldParam6'),
+      // Parameter configuration
+      growthParamCount: document.getElementById('growthParamCount'),
+      yieldParamCount: document.getElementById('yieldParamCount'),
+      growthParamsContainer: document.getElementById('growthParamsContainer'),
+      yieldParamsContainer: document.getElementById('yieldParamsContainer'),
+      // Soil analysis fields
+      soilFieldsContainer: document.getElementById('soilFieldsContainer'),
+      addSoilFieldBtn: document.getElementById('addSoilFieldBtn'),
       closeFieldModal: document.getElementById('closeFieldModal'),
       cancelFieldModal: document.getElementById('cancelFieldModal'),
+      
+      // Soil Analysis Panel
+      soilFieldSelect: document.getElementById('soilFieldSelect'),
+      soilStatusPanel: document.getElementById('soilStatusPanel'),
+      noSoilFieldSelected: document.getElementById('noSoilFieldSelected'),
+      soilBeforeStatus: document.getElementById('soilBeforeStatus'),
+      soilAfterStatus: document.getElementById('soilAfterStatus'),
+      soilBeforeInfo: document.getElementById('soilBeforeInfo'),
+      soilAfterInfo: document.getElementById('soilAfterInfo'),
+      soilBeforeActions: document.getElementById('soilBeforeActions'),
+      soilAfterActions: document.getElementById('soilAfterActions'),
+      soilBeforeData: document.getElementById('soilBeforeData'),
+      soilAfterData: document.getElementById('soilAfterData'),
+      initiateSoilBefore: document.getElementById('initiateSoilBefore'),
+      initiateSoilAfter: document.getElementById('initiateSoilAfter'),
+      soilComparisonSection: document.getElementById('soilComparisonSection'),
+      soilComparisonBody: document.getElementById('soilComparisonBody'),
       
       // Delete Modal
       deleteModal: document.getElementById('deleteModal'),
@@ -469,12 +658,22 @@
       currentTab = tab;
       elements.tabUsers.className = tab === 'users' ? 'btn btn-primary' : 'btn btn-secondary';
       elements.tabFields.className = tab === 'fields' ? 'btn btn-primary' : 'btn btn-secondary';
+      elements.tabSoil.className = tab === 'soil' ? 'btn btn-primary' : 'btn btn-secondary';
       elements.navUsers.classList.toggle('active', tab === 'users');
       elements.navFields.classList.toggle('active', tab === 'fields');
+      elements.navSoil.classList.toggle('active', tab === 'soil');
       elements.usersPanel.classList.toggle('hidden', tab !== 'users');
       elements.fieldsPanel.classList.toggle('hidden', tab !== 'fields');
-      elements.pageTitle.textContent = tab === 'users' ? 'User Management' : 'Field Management';
+      elements.soilPanel.classList.toggle('hidden', tab !== 'soil');
+      
+      const titles = { users: 'User Management', fields: 'Field Management', soil: 'Soil Analysis' };
+      elements.pageTitle.textContent = titles[tab] || 'Admin Panel';
       window.location.hash = tab;
+      
+      // Load soil analysis data when switching to soil tab
+      if (tab === 'soil') {
+        populateSoilFieldSelector();
+      }
     }
 
     // Render users table
@@ -615,12 +814,117 @@
     };
 
     // Field CRUD
+    
+    // Render growth parameter inputs
+    function renderGrowthParams(count, values = []) {
+      const defaults = CONFIG.DEFAULT_GROWTH_PARAMS;
+      let html = '';
+      for (let i = 0; i < count; i++) {
+        const value = values[i] || defaults[i] || `Growth ${i + 1}`;
+        html += `
+          <div class="form-group">
+            <input type="text" class="form-input growth-param-input" 
+                   data-index="${i}" 
+                   placeholder="Growth Parameter ${i + 1}" 
+                   value="${utils.escapeHtml(value)}">
+          </div>
+        `;
+      }
+      elements.growthParamsContainer.innerHTML = html;
+    }
+    
+    // Render yield parameter inputs
+    function renderYieldParams(count, values = []) {
+      const defaults = CONFIG.DEFAULT_YIELD_PARAMS;
+      let html = '';
+      for (let i = 0; i < count; i++) {
+        const value = values[i] || defaults[i] || `Yield ${i + 1}`;
+        html += `
+          <div class="form-group">
+            <input type="text" class="form-input yield-param-input" 
+                   data-index="${i}" 
+                   placeholder="Yield Parameter ${i + 1}" 
+                   value="${utils.escapeHtml(value)}">
+          </div>
+        `;
+      }
+      elements.yieldParamsContainer.innerHTML = html;
+    }
+    
+    // Render soil analysis field inputs
+    function renderSoilFields(values = null) {
+      const fields = values || CONFIG.DEFAULT_SOIL_FIELDS;
+      let html = '';
+      fields.forEach((field, i) => {
+        html += `
+          <div class="soil-field-row" data-index="${i}">
+            <input type="text" class="form-input soil-field-input" 
+                   value="${utils.escapeHtml(field)}" 
+                   placeholder="Soil property name">
+            <button type="button" class="btn btn-sm btn-icon remove-soil-field" title="Remove">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+        `;
+      });
+      elements.soilFieldsContainer.innerHTML = html;
+      
+      // Add remove handlers
+      elements.soilFieldsContainer.querySelectorAll('.remove-soil-field').forEach(btn => {
+        btn.addEventListener('click', () => {
+          btn.closest('.soil-field-row').remove();
+        });
+      });
+    }
+    
+    // Add new soil field
+    function addSoilField() {
+      const row = document.createElement('div');
+      row.className = 'soil-field-row';
+      row.innerHTML = `
+        <input type="text" class="form-input soil-field-input" placeholder="Soil property name">
+        <button type="button" class="btn btn-sm btn-icon remove-soil-field" title="Remove">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      `;
+      row.querySelector('.remove-soil-field').addEventListener('click', () => row.remove());
+      elements.soilFieldsContainer.appendChild(row);
+    }
+    
+    // Collect growth params from inputs
+    function collectGrowthParams() {
+      const inputs = elements.growthParamsContainer.querySelectorAll('.growth-param-input');
+      return Array.from(inputs).map((input, i) => input.value.trim() || `Growth ${i + 1}`);
+    }
+    
+    // Collect yield params from inputs
+    function collectYieldParams() {
+      const inputs = elements.yieldParamsContainer.querySelectorAll('.yield-param-input');
+      return Array.from(inputs).map((input, i) => input.value.trim() || `Yield ${i + 1}`);
+    }
+    
+    // Collect soil fields from inputs
+    function collectSoilFields() {
+      const inputs = elements.soilFieldsContainer.querySelectorAll('.soil-field-input');
+      return Array.from(inputs).map(input => input.value.trim()).filter(v => v);
+    }
+    
     function openAddFieldModal() {
       elements.fieldModalTitle.textContent = 'Add Field';
       elements.fieldForm.reset();
       elements.fieldId.value = '';
       elements.fieldInterval.value = 14;
       elements.fieldWindow.value = 3;
+      
+      // Set default counts
+      elements.growthParamCount.value = CONFIG.DEFAULT_GROWTH_PARAM_COUNT;
+      elements.yieldParamCount.value = CONFIG.DEFAULT_YIELD_PARAM_COUNT;
+      
+      // Render default params
+      renderGrowthParams(CONFIG.DEFAULT_GROWTH_PARAM_COUNT);
+      renderYieldParams(CONFIG.DEFAULT_YIELD_PARAM_COUNT);
+      renderSoilFields();
+      
       openModal(elements.fieldModal);
     }
 
@@ -636,12 +940,22 @@
       elements.fieldPlantingDate.value = utils.formatDateISO(field.planting_date);
       elements.fieldInterval.value = field.measurement_interval_days || 14;
       elements.fieldWindow.value = field.window_days || 3;
-      elements.fieldParam1.value = field.param1 || '';
-      elements.fieldParam2.value = field.param2 || '';
-      elements.fieldParam3.value = field.param3 || '';
-      elements.fieldParam4.value = field.param4 || '';
-      elements.fieldParam5.value = field.param5 || '';
-      elements.fieldParam6.value = field.param6 || '';
+      
+      // Get growth and yield params
+      const growthCount = field.growth_param_count || CONFIG.DEFAULT_GROWTH_PARAM_COUNT;
+      const yieldCount = field.yield_param_count || CONFIG.DEFAULT_YIELD_PARAM_COUNT;
+      const growthParams = field.growth_params || CONFIG.DEFAULT_GROWTH_PARAMS;
+      const yieldParams = field.yield_params || CONFIG.DEFAULT_YIELD_PARAMS;
+      const soilFields = field.soil_analysis_fields || CONFIG.DEFAULT_SOIL_FIELDS;
+      
+      // Set counts
+      elements.growthParamCount.value = growthCount;
+      elements.yieldParamCount.value = yieldCount;
+      
+      // Render params
+      renderGrowthParams(growthCount, growthParams);
+      renderYieldParams(yieldCount, yieldParams);
+      renderSoilFields(soilFields);
       
       openModal(elements.fieldModal);
     };
@@ -650,18 +964,31 @@
       e.preventDefault();
       
       const fieldId = elements.fieldId.value;
+      
+      // Collect parameter data
+      const growthParams = collectGrowthParams();
+      const yieldParams = collectYieldParams();
+      const soilFields = collectSoilFields();
+      
       const fieldData = {
         name: elements.fieldName.value.trim(),
         location: elements.fieldLocation.value.trim(),
         planting_date: elements.fieldPlantingDate.value,
         measurement_interval_days: parseInt(elements.fieldInterval.value) || 14,
         window_days: parseInt(elements.fieldWindow.value) || 3,
-        param1: elements.fieldParam1.value.trim() || 'Parameter 1',
-        param2: elements.fieldParam2.value.trim() || 'Parameter 2',
-        param3: elements.fieldParam3.value.trim() || 'Parameter 3',
-        param4: elements.fieldParam4.value.trim() || 'Parameter 4',
-        param5: elements.fieldParam5.value.trim() || 'Parameter 5',
-        param6: elements.fieldParam6.value.trim() || 'Parameter 6'
+        // New parameter structure
+        growth_param_count: parseInt(elements.growthParamCount.value),
+        yield_param_count: parseInt(elements.yieldParamCount.value),
+        growth_params: growthParams,
+        yield_params: yieldParams,
+        soil_analysis_fields: soilFields,
+        // Legacy param fields for backward compatibility
+        param1: growthParams[0] || 'Parameter 1',
+        param2: growthParams[1] || 'Parameter 2',
+        param3: growthParams[2] || 'Parameter 3',
+        param4: yieldParams[0] || 'Parameter 4',
+        param5: yieldParams[1] || 'Parameter 5',
+        param6: yieldParams[2] || 'Parameter 6'
       };
       
       let result;
@@ -720,6 +1047,153 @@
       openModal(elements.deleteModal);
     };
 
+    // ============================================
+    // SOIL ANALYSIS MANAGEMENT
+    // ============================================
+    
+    let selectedSoilFieldId = null;
+    
+    function populateSoilFieldSelector() {
+      const fields = admin.getFields();
+      elements.soilFieldSelect.innerHTML = '<option value="">-- Select a field --</option>' + 
+        fields.map(f => `<option value="${f.id}">${utils.escapeHtml(f.name)}</option>`).join('');
+    }
+    
+    async function loadSoilAnalysisForField(fieldId) {
+      selectedSoilFieldId = fieldId;
+      
+      if (!fieldId) {
+        elements.soilStatusPanel.classList.add('hidden');
+        elements.noSoilFieldSelected.classList.remove('hidden');
+        return;
+      }
+      
+      elements.noSoilFieldSelected.classList.add('hidden');
+      elements.soilStatusPanel.classList.remove('hidden');
+      
+      // Get field and soil analysis data
+      const fields = admin.getFields();
+      const field = fields.find(f => f.id === fieldId);
+      if (!field) return;
+      
+      const soilResult = await api.getSoilAnalysis(fieldId);
+      const soilData = soilResult.data || [];
+      
+      const beforeAnalysis = soilData.find(s => s.analysis_type === 'before');
+      const afterAnalysis = soilData.find(s => s.analysis_type === 'after');
+      
+      // Update Before card
+      updateSoilCard('before', field.soil_before_status || 'none', beforeAnalysis, field);
+      
+      // Update After card
+      updateSoilCard('after', field.soil_after_status || 'none', afterAnalysis, field);
+      
+      // Show comparison if both exist
+      if (beforeAnalysis && afterAnalysis) {
+        renderSoilComparison(beforeAnalysis, afterAnalysis, field.soil_analysis_fields || CONFIG.DEFAULT_SOIL_FIELDS);
+        elements.soilComparisonSection.classList.remove('hidden');
+      } else {
+        elements.soilComparisonSection.classList.add('hidden');
+      }
+    }
+    
+    function updateSoilCard(type, status, analysis, field) {
+      const statusEl = type === 'before' ? elements.soilBeforeStatus : elements.soilAfterStatus;
+      const infoEl = type === 'before' ? elements.soilBeforeInfo : elements.soilAfterInfo;
+      const actionsEl = type === 'before' ? elements.soilBeforeActions : elements.soilAfterActions;
+      const dataEl = type === 'before' ? elements.soilBeforeData : elements.soilAfterData;
+      const initiateBtn = type === 'before' ? elements.initiateSoilBefore : elements.initiateSoilAfter;
+      
+      // Reset
+      dataEl.classList.add('hidden');
+      actionsEl.classList.remove('hidden');
+      
+      if (status === 'complete' && analysis) {
+        statusEl.textContent = 'Complete';
+        statusEl.className = 'badge badge-success';
+        infoEl.textContent = `Recorded by ${analysis.recorded_by_name || 'Unknown'} on ${utils.formatDateISO(analysis.recorded_date)}`;
+        actionsEl.classList.add('hidden');
+        dataEl.classList.remove('hidden');
+        
+        // Render data table
+        const soilFields = field.soil_analysis_fields || CONFIG.DEFAULT_SOIL_FIELDS;
+        let dataHtml = '<table class="table table-sm"><tbody>';
+        soilFields.forEach(fieldName => {
+          const value = analysis.data?.[fieldName] || '-';
+          dataHtml += `<tr><td>${utils.escapeHtml(fieldName)}</td><td>${utils.escapeHtml(String(value))}</td></tr>`;
+        });
+        dataHtml += '</tbody></table>';
+        dataEl.innerHTML = dataHtml;
+        
+      } else if (status === 'pending') {
+        statusEl.textContent = 'Pending';
+        statusEl.className = 'badge badge-warning';
+        infoEl.textContent = 'Waiting for field worker to submit data.';
+        initiateBtn.textContent = 'Pending...';
+        initiateBtn.disabled = true;
+        
+      } else {
+        statusEl.textContent = 'Not Started';
+        statusEl.className = 'badge badge-secondary';
+        infoEl.textContent = type === 'before' 
+          ? 'Initial soil analysis before the experiment begins.' 
+          : 'Final soil analysis after the experiment concludes.';
+        initiateBtn.textContent = 'Initiate Analysis';
+        initiateBtn.disabled = type === 'after' && (!field.soil_before_status || field.soil_before_status !== 'complete');
+      }
+    }
+    
+    function renderSoilComparison(before, after, soilFields) {
+      let html = '';
+      soilFields.forEach(fieldName => {
+        const beforeVal = before.data?.[fieldName];
+        const afterVal = after.data?.[fieldName];
+        let changeHtml = '-';
+        
+        if (beforeVal != null && afterVal != null) {
+          const beforeNum = parseFloat(beforeVal);
+          const afterNum = parseFloat(afterVal);
+          if (!isNaN(beforeNum) && !isNaN(afterNum)) {
+            const diff = afterNum - beforeNum;
+            const pct = beforeNum !== 0 ? ((diff / beforeNum) * 100).toFixed(1) : 0;
+            if (diff > 0) {
+              changeHtml = `<span class="text-success">+${diff.toFixed(2)} (+${pct}%)</span>`;
+            } else if (diff < 0) {
+              changeHtml = `<span class="text-danger">${diff.toFixed(2)} (${pct}%)</span>`;
+            } else {
+              changeHtml = '<span class="text-muted">No change</span>';
+            }
+          }
+        }
+        
+        html += `
+          <tr>
+            <td>${utils.escapeHtml(fieldName)}</td>
+            <td>${beforeVal != null ? utils.escapeHtml(String(beforeVal)) : '-'}</td>
+            <td>${afterVal != null ? utils.escapeHtml(String(afterVal)) : '-'}</td>
+            <td>${changeHtml}</td>
+          </tr>`;
+      });
+      elements.soilComparisonBody.innerHTML = html;
+    }
+    
+    async function initiateSoilAnalysis(type) {
+      if (!selectedSoilFieldId) return;
+      
+      const statusField = type === 'before' ? 'soil_before_status' : 'soil_after_status';
+      const result = await api.updateSoilAnalysisStatus(selectedSoilFieldId, statusField, 'pending');
+      
+      if (result.error) {
+        showToast(result.error, 'error');
+        return;
+      }
+      
+      // Refresh admin fields data
+      await admin.init();
+      loadSoilAnalysisForField(selectedSoilFieldId);
+      showToast(`${type === 'before' ? 'Before' : 'After'} analysis initiated. Field workers can now submit soil data.`, 'success');
+    }
+
     // Force delete handler
     document.getElementById('forceDeleteBtn').addEventListener('click', async () => {
       if (!pendingForceDeleteFieldId) return;
@@ -755,7 +1229,8 @@
       
       // Check hash for tab
       const hash = window.location.hash.slice(1);
-      switchTab(hash === 'fields' ? 'fields' : 'users');
+      const validTabs = ['users', 'fields', 'soil'];
+      switchTab(validTabs.includes(hash) ? hash : 'users');
       
       renderUsers();
       renderFields();
@@ -767,10 +1242,30 @@
     // Event Listeners
     elements.tabUsers.addEventListener('click', () => switchTab('users'));
     elements.tabFields.addEventListener('click', () => switchTab('fields'));
+    elements.tabSoil.addEventListener('click', () => switchTab('soil'));
     elements.addUserBtn.addEventListener('click', openAddUserModal);
     elements.addFieldBtn.addEventListener('click', openAddFieldModal);
     elements.userForm.addEventListener('submit', saveUser);
     elements.fieldForm.addEventListener('submit', saveField);
+    
+    // Parameter count change handlers
+    elements.growthParamCount.addEventListener('change', (e) => {
+      const count = parseInt(e.target.value);
+      const currentValues = collectGrowthParams();
+      renderGrowthParams(count, currentValues);
+    });
+    elements.yieldParamCount.addEventListener('change', (e) => {
+      const count = parseInt(e.target.value);
+      const currentValues = collectYieldParams();
+      renderYieldParams(count, currentValues);
+    });
+    elements.addSoilFieldBtn.addEventListener('click', addSoilField);
+    
+    // Soil analysis event listeners
+    elements.soilFieldSelect.addEventListener('change', (e) => loadSoilAnalysisForField(e.target.value));
+    elements.initiateSoilBefore.addEventListener('click', () => initiateSoilAnalysis('before'));
+    elements.initiateSoilAfter.addEventListener('click', () => initiateSoilAnalysis('after'));
+    
     elements.closeUserModal.addEventListener('click', () => closeModal(elements.userModal));
     elements.cancelUserModal.addEventListener('click', () => closeModal(elements.userModal));
     elements.closeFieldModal.addEventListener('click', () => closeModal(elements.fieldModal));

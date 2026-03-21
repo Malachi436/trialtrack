@@ -170,6 +170,32 @@
     .param-btn-lock {
       color: var(--color-text-muted);
     }
+    
+    /* Parameter group styles */
+    .param-group {
+      margin-bottom: var(--space-4);
+    }
+    .param-group-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-2);
+      padding-bottom: var(--space-1);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .param-group-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+    .param-btn.growth .param-btn-number {
+      background: var(--color-success-light);
+      color: var(--color-success);
+    }
+    .param-btn.yield .param-btn-number {
+      background: var(--color-warning-light);
+      color: var(--color-warning);
+    }
 
     /* Parameter dropdown styles */
     .param-dropdown-container {
@@ -689,48 +715,78 @@
     // ============================================
 
     function renderParamSelector() {
-      const labels = entry.getParameterLabels();
+      const growthLabels = entry.getGrowthParamLabels();
+      const yieldLabels = entry.getYieldParamLabels();
+      const counts = entry.getParameterCounts();
       const firstIncomplete = entry.getFirstIncompleteParameter();
       
-      // Populate dropdown with all parameters
-      elements.paramDropdown.innerHTML = labels.map((label, index) => {
+      // Build dropdown with optgroups for Growth and Yield
+      let dropdownHtml = '<optgroup label="Growth Parameters">';
+      growthLabels.forEach((label, index) => {
         const paramNum = index + 1;
         const progress = entry.getParameterProgress(paramNum);
         const statusText = progress.isComplete ? '(Complete)' : `(${progress.completed}/5 blocks)`;
-        return `<option value="${paramNum}">P${paramNum}: ${utils.escapeHtml(label)} ${statusText}</option>`;
-      }).join('');
+        dropdownHtml += `<option value="${paramNum}">G${index + 1}: ${utils.escapeHtml(label)} ${statusText}</option>`;
+      });
+      dropdownHtml += '</optgroup><optgroup label="Yield Parameters">';
+      yieldLabels.forEach((label, index) => {
+        const paramNum = counts.growth + index + 1;
+        const progress = entry.getParameterProgress(paramNum);
+        const statusText = progress.isComplete ? '(Complete)' : `(${progress.completed}/5 blocks)`;
+        dropdownHtml += `<option value="${paramNum}">Y${index + 1}: ${utils.escapeHtml(label)} ${statusText}</option>`;
+      });
+      dropdownHtml += '</optgroup>';
+      elements.paramDropdown.innerHTML = dropdownHtml;
       
       // Pre-select first incomplete parameter if exists
       if (firstIncomplete) {
         elements.paramDropdown.value = firstIncomplete;
       }
       
-      // Render parameter buttons (visual progress - all clickable)
-      elements.paramBtnContainer.innerHTML = labels.map((label, index) => {
+      // Render parameter buttons grouped by Growth and Yield
+      let buttonsHtml = '<div class="param-group"><h5 class="param-group-title">Growth Parameters</h5><div class="param-group-buttons">';
+      growthLabels.forEach((label, index) => {
         const paramNum = index + 1;
         const progress = entry.getParameterProgress(paramNum);
         const isComplete = progress.isComplete;
         
-        let statusHtml = '';
-        if (isComplete) {
-          statusHtml = `<svg class="param-btn-check" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>
-          </svg>`;
-        } else {
-          statusHtml = `<span>${progress.completed}/5</span>`;
-        }
+        let statusHtml = isComplete 
+          ? `<svg class="param-btn-check" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>`
+          : `<span>${progress.completed}/5</span>`;
         
-        return `
-          <button type="button" class="param-btn ${isComplete ? 'complete' : ''}" 
-                  data-param="${paramNum}">
+        buttonsHtml += `
+          <button type="button" class="param-btn ${isComplete ? 'complete' : ''} growth" data-param="${paramNum}">
             <div class="param-btn-content">
-              <span class="param-btn-number">P${paramNum}</span>
+              <span class="param-btn-number">G${index + 1}</span>
               <span class="param-btn-label">${utils.escapeHtml(label)}</span>
             </div>
             <div class="param-btn-progress">${statusHtml}</div>
-          </button>
-        `;
-      }).join('');
+          </button>`;
+      });
+      buttonsHtml += '</div></div>';
+      
+      buttonsHtml += '<div class="param-group"><h5 class="param-group-title">Yield Parameters</h5><div class="param-group-buttons">';
+      yieldLabels.forEach((label, index) => {
+        const paramNum = counts.growth + index + 1;
+        const progress = entry.getParameterProgress(paramNum);
+        const isComplete = progress.isComplete;
+        
+        let statusHtml = isComplete 
+          ? `<svg class="param-btn-check" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>`
+          : `<span>${progress.completed}/5</span>`;
+        
+        buttonsHtml += `
+          <button type="button" class="param-btn ${isComplete ? 'complete' : ''} yield" data-param="${paramNum}">
+            <div class="param-btn-content">
+              <span class="param-btn-number">Y${index + 1}</span>
+              <span class="param-btn-label">${utils.escapeHtml(label)}</span>
+            </div>
+            <div class="param-btn-progress">${statusHtml}</div>
+          </button>`;
+      });
+      buttonsHtml += '</div></div>';
+      
+      elements.paramBtnContainer.innerHTML = buttonsHtml;
       
       // Add click handlers to all buttons (no locking)
       elements.paramBtnContainer.querySelectorAll('.param-btn').forEach(btn => {

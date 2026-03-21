@@ -99,7 +99,17 @@ const CONFIG = {
   DEFAULT_INTERVAL_DAYS: 14,
   DEFAULT_WINDOW_DAYS: 3,
   
-  // Parameter names (default, can be renamed per field)
+  // Parameter configuration
+  MAX_GROWTH_PARAMS: 10,
+  MAX_YIELD_PARAMS: 10,
+  DEFAULT_GROWTH_PARAM_COUNT: 3,
+  DEFAULT_YIELD_PARAM_COUNT: 3,
+  
+  // Default parameter names
+  DEFAULT_GROWTH_PARAMS: ['Height', 'Leaf Count', 'Stem Diameter'],
+  DEFAULT_YIELD_PARAMS: ['Fruit Weight', 'Fruit Count', 'Total Yield'],
+  
+  // Legacy parameter names (for backward compatibility)
   DEFAULT_PARAMETERS: [
     'Parameter 1',
     'Parameter 2',
@@ -108,6 +118,14 @@ const CONFIG = {
     'Parameter 5',
     'Parameter 6'
   ],
+  
+  // Soil analysis configuration
+  DEFAULT_SOIL_FIELDS: ['pH', 'Nitrogen (N)', 'Phosphorus (P)', 'Potassium (K)', 'Organic Matter'],
+  SOIL_ANALYSIS_STATUS: {
+    NONE: 'none',
+    PENDING: 'pending',
+    COMPLETE: 'complete'
+  },
   
   // Page routes
   ROUTES: {
@@ -135,5 +153,9 @@ Object.freeze(CONFIG.TREATMENTS);
 Object.freeze(CONFIG.TREATMENT_ORDER);
 Object.freeze(CONFIG.PLOT_LAYOUT);
 Object.freeze(CONFIG.DEFAULT_PARAMETERS);
+Object.freeze(CONFIG.DEFAULT_GROWTH_PARAMS);
+Object.freeze(CONFIG.DEFAULT_YIELD_PARAMS);
+Object.freeze(CONFIG.DEFAULT_SOIL_FIELDS);
+Object.freeze(CONFIG.SOIL_ANALYSIS_STATUS);
 Object.freeze(CONFIG.ROUTES);
 Object.freeze(CONFIG.ROLE_REDIRECTS);
