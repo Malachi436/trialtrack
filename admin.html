@@ -521,6 +521,42 @@
     </div>
   </div>
 
+  <!-- Field Detail Modal -->
+  <div class="modal-backdrop" id="fieldDetailModal">
+    <div class="modal modal-xl">
+      <div class="modal-header">
+        <h3 class="modal-title" id="fieldDetailTitle">Field Rounds</h3>
+        <button class="modal-close" id="closeFieldDetailModal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <div id="fieldRoundsContent">
+          <!-- Rounds table loaded dynamically -->
+        </div>
+        
+        <!-- Round Entries Detail Panel -->
+        <div id="roundEntriesPanel" class="hidden" style="margin-top: var(--space-6); border-top: 2px solid var(--color-border); padding-top: var(--space-4);">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h4 class="text-md font-semibold" id="roundEntriesTitle">Round Entries</h4>
+              <p class="text-sm text-secondary" id="roundEntriesSubtitle"></p>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="backToRoundsBtn">Back to Rounds</button>
+          </div>
+          <div id="roundEntriesContent">
+            <!-- Entries table loaded dynamically -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="closeFieldDetailBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toastContainer" class="toast-container"></div>
 
@@ -530,6 +566,7 @@
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/api.js"></script>
   <script src="assets/js/admin.js"></script>
+  <script src="assets/js/rounds-detail.js"></script>
   
   <script>
     // Auth check - superadmin only
@@ -722,8 +759,9 @@
           <td><strong>${utils.escapeHtml(field.name)}</strong></td>
           <td class="text-muted">${utils.escapeHtml(field.location || '—')}</td>
           <td>${utils.formatDate(field.planting_date)}</td>
-          <td>—</td>
+          <td class="round-count-placeholder">—</td>
           <td>
+            <button class="btn btn-ghost btn-sm" onclick="viewFieldRounds('${field.id}')">View Rounds</button>
             <a href="analytics.html?field=${field.id}" class="btn btn-ghost btn-sm">Analytics</a>
             <button class="btn btn-ghost btn-sm" onclick="editField('${field.id}')">Edit</button>
             <button class="btn btn-ghost btn-sm text-danger" onclick="confirmDeleteField('${field.id}', '${utils.escapeHtml(field.name)}')">Delete</button>
@@ -1282,6 +1320,11 @@
       }
     });
     elements.logoutBtn.addEventListener('click', () => auth.logout());
+    
+    // Field Detail Modal
+    elements.closeFieldDetailModal.addEventListener('click', () => closeFieldDetail());
+    elements.closeFieldDetailBtn.addEventListener('click', () => closeFieldDetail());
+    elements.backToRoundsBtn.addEventListener('click', () => closeRoundEntries());
 
     // Start
     if (session) {
@@ -1290,3 +1333,9 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
